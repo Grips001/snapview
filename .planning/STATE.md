@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-capture-engine/01-01-PLAN.md
-last_updated: "2026-03-17T03:58:08.207Z"
+stopped_at: Completed 01-capture-engine/01-02-PLAN.md
+last_updated: "2026-03-17T04:03:40.947Z"
 last_activity: 2026-03-16 — Roadmap created
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-capture-engine P01 | 3min | 2 tasks | 10 files |
+| Phase 01-capture-engine P02 | 2min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 01-capture-engine]: Pinned electron to 35.7.5 — Linux cursor regression bugs in v36+, Electron 41.x too new for Linux validation
 - [Phase 01-capture-engine]: CLI spawn uses stdio pipe for stdout — machine-parseable file path output per locked decision
 - [Phase 01-capture-engine]: Split tsconfig: nodenext for main process, bundler for renderer — different module resolution contexts
+- [Phase 01-capture-engine]: askForMediaAccess cast: Electron 35.x typings miss screen type; cast to microphone for compile, runtime works correctly
+- [Phase 01-capture-engine]: tsconfig rootDir=src (not src/main): shared/ files must be within rootDir for TypeScript compilation with nodenext resolution
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T03:58:08.203Z
-Stopped at: Completed 01-capture-engine/01-01-PLAN.md
+Last session: 2026-03-17T04:03:40.943Z
+Stopped at: Completed 01-capture-engine/01-02-PLAN.md
 Resume file: None

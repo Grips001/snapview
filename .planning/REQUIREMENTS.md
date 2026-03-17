@@ -12,8 +12,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **CAPT-01**: User can trigger a fullscreen dimmed overlay for screen region selection
 - [ ] **CAPT-02**: User can drag-to-select a rectangular screen region with crosshair cursor
 - [ ] **CAPT-03**: User sees a preview of the captured region with "Send to Claude" and "Retake" options
-- [ ] **CAPT-04**: User can press ESC at any point to cancel capture and return to Claude
-- [ ] **CAPT-05**: Captured image is saved as PNG to OS temp directory with unique filename
+- [x] **CAPT-04**: User can press ESC at any point to cancel capture and return to Claude
+- [x] **CAPT-05**: Captured image is saved as PNG to OS temp directory with unique filename
 
 ### Claude Code Integration
 
@@ -25,7 +25,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### File Management
 
-- [ ] **FILE-01**: Screenshots are written to `os.tmpdir()/snapview/` with timestamp+random filenames
+- [x] **FILE-01**: Screenshots are written to `os.tmpdir()/snapview/` with timestamp+random filenames
 - [ ] **FILE-02**: Screenshots older than 24 hours are automatically cleaned up on next launch
 - [ ] **FILE-03**: Screenshot is also copied to clipboard when captured
 
@@ -37,12 +37,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Platform Safety
 
-- [ ] **PLAT-01**: macOS screen recording permission is checked before capture attempt (no silent hang)
-- [ ] **PLAT-02**: Linux overlay uses correct GPU flags for transparency on X11/NVIDIA
-- [ ] **PLAT-03**: Electron process has hard-exit timeout to prevent Claude Code hook hang
-- [ ] **PLAT-04**: Overlay appears on the correct monitor in multi-monitor setups
-- [ ] **PLAT-05**: macOS Sequoia monthly permission re-prompt is handled gracefully
-- [ ] **PLAT-06**: Basic Wayland fallback support (X11 primary)
+- [x] **PLAT-01**: macOS screen recording permission is checked before capture attempt (no silent hang)
+- [x] **PLAT-02**: Linux overlay uses correct GPU flags for transparency on X11/NVIDIA
+- [x] **PLAT-03**: Electron process has hard-exit timeout to prevent Claude Code hook hang
+- [x] **PLAT-04**: Overlay appears on the correct monitor in multi-monitor setups
+- [x] **PLAT-05**: macOS Sequoia monthly permission re-prompt is handled gracefully
+- [x] **PLAT-06**: Basic Wayland fallback support (X11 primary)
 
 ## v2 Requirements
 
@@ -85,25 +85,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAPT-01 | Phase 1 | Pending |
 | CAPT-02 | Phase 1 | Pending |
 | CAPT-03 | Phase 1 | Pending |
-| CAPT-04 | Phase 1 | Pending |
-| CAPT-05 | Phase 1 | Pending |
+| CAPT-04 | Phase 1 | Complete |
+| CAPT-05 | Phase 1 | Complete |
 | INTG-01 | Phase 2 | Pending |
 | INTG-02 | Phase 2 | Pending |
 | INTG-03 | Phase 2 | Pending |
 | INTG-04 | Phase 2 | Pending |
 | INTG-05 | Phase 3 | Pending |
-| FILE-01 | Phase 1 | Pending |
+| FILE-01 | Phase 1 | Complete |
 | FILE-02 | Phase 3 | Pending |
 | FILE-03 | Phase 3 | Pending |
 | INST-01 | Phase 2 | Pending |
 | INST-02 | Phase 1 | Complete |
 | INST-03 | Phase 1 | Complete |
-| PLAT-01 | Phase 1 | Pending |
-| PLAT-02 | Phase 1 | Pending |
-| PLAT-03 | Phase 1 | Pending |
-| PLAT-04 | Phase 1 | Pending |
-| PLAT-05 | Phase 1 | Pending |
-| PLAT-06 | Phase 1 | Pending |
+| PLAT-01 | Phase 1 | Complete |
+| PLAT-02 | Phase 1 | Complete |
+| PLAT-03 | Phase 1 | Complete |
+| PLAT-04 | Phase 1 | Complete |
+| PLAT-05 | Phase 1 | Complete |
+| PLAT-06 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 22 total
