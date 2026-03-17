@@ -1,4 +1,4 @@
-name: Publish to GitHub Packages
+name: Publish Release
 
 on:
   release:
@@ -8,8 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +20,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://npm.pkg.github.com
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -32,7 +30,10 @@ jobs:
       - name: Test
         run: bun test
 
-      - name: Publish
-        run: npm publish --access public
+      - name: Pack tarball
+        run: npm pack
+
+      - name: Upload tarball to release
+        run: gh release upload "${{ github.event.release.tag_name }}" snapview-*.tgz --clobber
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

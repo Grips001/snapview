@@ -1,6 +1,6 @@
 # Snapview
 
-[![npm version](https://img.shields.io/npm/v/snapview.svg)](https://www.npmjs.com/package/snapview)
+[![GitHub release](https://img.shields.io/github/v/release/Grips001/snapview)](https://github.com/Grips001/snapview/releases/latest)
 [![CI](https://github.com/Grips001/snapview/actions/workflows/ci.yml/badge.svg)](https://github.com/Grips001/snapview/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -9,20 +9,14 @@ Show Claude what you're looking at — capture any screen region and inject it i
 ## Install
 
 ```bash
-npm i -g @grips001/snapview --registry=https://npm.pkg.github.com
+npm i -g https://github.com/Grips001/snapview/releases/latest/download/snapview-1.0.0.tgz
 ```
 
 Or with bun:
 
 ```bash
-bun add -g @grips001/snapview --registry=https://npm.pkg.github.com
+bun add -g https://github.com/Grips001/snapview/releases/latest/download/snapview-1.0.0.tgz
 ```
-
-> **First time using GitHub Packages?** You need to authenticate once:
-> ```bash
-> npm login --registry=https://npm.pkg.github.com
-> ```
-> Use your GitHub username, and a [Personal Access Token](https://github.com/settings/tokens) with `read:packages` scope as the password.
 
 The installer automatically registers the `/snapview` skill and auto-trigger hook into Claude Code. Requires [Claude Code](https://claude.ai/code) to be installed.
 
