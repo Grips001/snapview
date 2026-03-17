@@ -46,7 +46,7 @@ Plans:
   2. Claude can emit a structured signal that auto-triggers the capture UI and receives the screenshot path without user typing any command
   3. Running `npm i -g snapview` installs the binary and registers the skill and hooks in `~/.claude/` — available in all Claude Code projects with no further setup
   4. If the Electron process stalls or crashes, the Claude Code hook exits cleanly within 30 seconds rather than hanging the session indefinitely
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — SKILL.md template, Stop hook script, and postinstall registration logic
@@ -71,5 +71,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Capture Engine | 5/5 | Complete | 2026-03-17 |
-| 2. Claude Code Integration | 1/3 | In Progress|  |
+| 2. Claude Code Integration | 2/3 | In Progress|  |
 | 3. Capture Lifecycle | 0/TBD | Not started | - |

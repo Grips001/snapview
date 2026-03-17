@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-17T14:34:20.071Z"
-last_activity: 2026-03-17 — Phase 1 capture engine complete
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-17T14:38:30.000Z"
+last_activity: 2026-03-17 — Phase 2 Plan 2 complete — CLI wiring and unit tests
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
-  percent: 33
+  completed_plans: 7
+  percent: 42
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 
 ## Current Position
 
-Phase: 1 of 3 (Capture Engine) — COMPLETE
-Plan: 5 of 5 in current phase — ALL COMPLETE
-Status: Phase 1 complete — ready for Phase 2 planning
-Last activity: 2026-03-17 — Phase 1 capture engine complete
+Phase: 2 of 3 (Claude Code Integration) — IN PROGRESS
+Plan: 2 of 3 in current phase
+Status: Plan 02-02 complete — CLI wiring and unit tests done
+Last activity: 2026-03-17 — CLI install/uninstall subcommands and 15 unit tests
 
-Progress: [███░░░░░░░] 33%
+Progress: [████░░░░░░] 42%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 01-capture-engine P04 | 5min | 2 tasks | 4 files |
 | Phase 01-capture-engine P05 | 10min | 2 tasks | 2 files |
 | Phase 02-claude-code-integration P01 | 3min | 2 tasks | 3 files |
+| Phase 02-claude-code-integration P02 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 02-claude-code-integration]: Node.js hook script (not bash) for cross-platform Windows compatibility
 - [Phase 02-claude-code-integration]: Dual trigger detection: JSON parse + substring scan for snapview_capture signal
 - [Phase 02-claude-code-integration]: Forward-slash path normalization in settings.json hook command for Windows
+- [Phase 02-claude-code-integration]: Subcommand routing checks args[0] before require('electron') — avoids heavy Electron load for install/uninstall
+- [Phase 02-claude-code-integration]: Child-process spawn with HOME/USERPROFILE override for postinstall test isolation — CJS module-level constants prevent in-process mocking
+- [Phase 02-claude-code-integration]: Cross-platform mock snapview binary — .cmd wrapper on Windows, sh script on Unix
 
 ### Pending Todos
 
@@ -89,10 +93,10 @@ None yet.
 ### Blockers/Concerns
 
 - [Phase 2]: Hook auto-trigger signal format needs validation — structured JSON output from Claude is recommended but exact schema must be defined during Phase 2 planning. Validate against `UserPromptSubmit` hook (confirmed) vs `PostToolUse` (unconfirmed for `additionalContext`).
-- [Phase 2]: `settings.json` merge logic must be read-modify-write, not overwrite — existing hooks config must be preserved.
+- RESOLVED [Phase 2]: `settings.json` merge logic must be read-modify-write, not overwrite — implemented and tested in 02-01/02-02.
 
 ## Session Continuity
 
-Last session: 2026-03-17T14:34:20.067Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-17T14:38:30.000Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
