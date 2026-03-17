@@ -8,6 +8,9 @@
  * Do NOT import from 'electron' directly.
  */
 
+// Make this file a module so that `declare global` is valid
+export {};
+
 // ----------------------------------------
 // Type declaration for preload bridge
 // ----------------------------------------
