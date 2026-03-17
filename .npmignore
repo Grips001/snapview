@@ -1,0 +1,30 @@
+# Source (built output in out/ is what gets used)
+src/
+
+# Planning and docs
+.planning/
+milestones/
+
+# Tests
+**/*.test.ts
+**/*.test.js
+
+# Config files not needed at runtime
+tsconfig*.json
+electron.vite.config.ts
+electron-builder.yml
+bun.lock
+
+# Git and GitHub
+.git/
+.github/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

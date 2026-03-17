@@ -1,17 +1,42 @@
 {
   "name": "snapview",
-  "version": "0.1.0",
-  "description": "Screen capture tool for Claude Code",
+  "version": "1.0.0",
+  "description": "Screen capture tool for Claude Code — show Claude what you're looking at",
   "license": "MIT",
+  "author": "Grips001",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Grips001/snapview.git"
+  },
+  "homepage": "https://github.com/Grips001/snapview",
+  "bugs": {
+    "url": "https://github.com/Grips001/snapview/issues"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "screenshot",
+    "screen-capture",
+    "electron",
+    "cli"
+  ],
   "main": "out/main/index.js",
   "bin": {
     "snapview": "bin/snapview.cjs"
   },
+  "files": [
+    "bin/snapview.cjs",
+    "out/",
+    "scripts/postinstall.cjs",
+    "scripts/snapview-autotrigger.js",
+    "claude-integration/"
+  ],
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "test": "bun test",
+    "prepublishOnly": "bun run build",
     "postinstall": "node scripts/postinstall.cjs"
   },
   "dependencies": {
@@ -23,5 +48,8 @@
     "electron-builder": "26.8.1",
     "typescript": "5.9.3",
     "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
