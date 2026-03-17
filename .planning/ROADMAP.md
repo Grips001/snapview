@@ -12,7 +12,7 @@ Snapview ships in three phases. Phase 1 builds the cross-platform capture engine
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Capture Engine** - Working cross-platform screen region capture with preview, temp file output, and all platform safety guards
+- [x] **Phase 1: Capture Engine** - Working cross-platform screen region capture with preview, temp file output, and all platform safety guards
 - [ ] **Phase 2: Claude Code Integration** - `/snapview` skill command, hooks-based auto-trigger, and one-command global install
 - [ ] **Phase 3: Capture Lifecycle** - Auto-cleanup, clipboard copy, and screenshot promotion to project directory
 
@@ -28,14 +28,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User presses ESC at any point and the overlay closes cleanly — no orphaned processes, no hung terminal
   4. Approved capture is saved as a PNG at `os.tmpdir()/snapview/snapview-{timestamp}-{random}.png` and the path is printed to stdout
   5. The tool works without installing any OS-level dependencies on Windows, macOS, and Linux (X11)
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — Project scaffold, configs, shared types, CLI entry point
-- [ ] 01-02-PLAN.md — Main process, capture engine, cleanup, preload bridge
-- [ ] 01-03-PLAN.md — Renderer UI — overlay canvas, selection, preview panel
-- [ ] 01-04-PLAN.md — Unit test suite for main process and CLI
-- [ ] 01-05-PLAN.md — Build verification and manual integration checkpoint
+- [x] 01-01-PLAN.md — Project scaffold, configs, shared types, CLI entry point
+- [x] 01-02-PLAN.md — Main process, capture engine, cleanup, preload bridge
+- [x] 01-03-PLAN.md — Renderer UI — overlay canvas, selection, preview panel
+- [x] 01-04-PLAN.md — Unit test suite for main process and CLI
+- [x] 01-05-PLAN.md — Build verification and manual integration checkpoint
 
 ### Phase 2: Claude Code Integration
 **Goal**: Users can trigger a screenshot from inside Claude Code via `/snapview`, Claude can auto-request a screenshot via hooks, and `npm i -g snapview` both installs the binary and configures the Claude Code skill and hooks in one step
@@ -65,6 +65,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Capture Engine | 4/5 | In Progress|  |
+| 1. Capture Engine | 5/5 | Complete | 2026-03-17 |
 | 2. Claude Code Integration | 0/TBD | Not started | - |
 | 3. Capture Lifecycle | 0/TBD | Not started | - |
