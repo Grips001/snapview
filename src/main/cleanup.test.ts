@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test';
+import { describe, test, expect, mock, beforeEach, afterEach } from 'bun:test';
 import os from 'os';
 import path from 'path';
 
@@ -85,5 +85,64 @@ describe('sweepOldCaptures', () => {
     mockUnlink.mockRejectedValue(new Error('Permission denied') as never);
 
     await expect(sweepOldCaptures()).resolves.toBeUndefined();
+  });
+
+  describe('SNAPVIEW_RETENTION_HOURS env var', () => {
+    afterEach(() => {
+      delete process.env.SNAPVIEW_RETENTION_HOURS;
+    });
+
+    test('uses SNAPVIEW_RETENTION_HOURS env var for retention window', async () => {
+      process.env.SNAPVIEW_RETENTION_HOURS = '1';
+      const oldFile = 'snapview-1000000000000-abc12345.png';
+      mockReaddir.mockResolvedValue([oldFile] as never);
+      // 2 hours old — older than 1h retention, should be deleted
+      mockStat.mockResolvedValue({ mtimeMs: Date.now() - 2 * 60 * 60 * 1000 } as never);
+      mockUnlink.mockResolvedValue(undefined as never);
+
+      await sweepOldCaptures();
+
+      expect(mockUnlink).toHaveBeenCalledTimes(1);
+      const unlinkPath: string = mockUnlink.mock.calls[0][0] as string;
+      expect(unlinkPath).toContain(oldFile);
+    });
+
+    test('defaults to 24 hours when SNAPVIEW_RETENTION_HOURS is not set', async () => {
+      delete process.env.SNAPVIEW_RETENTION_HOURS;
+      const recentFile = 'snapview-9999999999999-def12345.png';
+      mockReaddir.mockResolvedValue([recentFile] as never);
+      // 23 hours old — younger than 24h default, should NOT be deleted
+      mockStat.mockResolvedValue({ mtimeMs: Date.now() - 23 * 60 * 60 * 1000 } as never);
+
+      await sweepOldCaptures();
+
+      expect(mockUnlink).not.toHaveBeenCalled();
+    });
+
+    test('defaults to 24 hours when SNAPVIEW_RETENTION_HOURS is empty string', async () => {
+      process.env.SNAPVIEW_RETENTION_HOURS = '';
+      const oldFile = 'snapview-1000000000000-abc12345.png';
+      mockReaddir.mockResolvedValue([oldFile] as never);
+      // 25 hours old — older than 24h default, should be deleted
+      mockStat.mockResolvedValue({ mtimeMs: Date.now() - 25 * 60 * 60 * 1000 } as never);
+      mockUnlink.mockResolvedValue(undefined as never);
+
+      await sweepOldCaptures();
+
+      expect(mockUnlink).toHaveBeenCalledTimes(1);
+    });
+
+    test('defaults to 24 hours when SNAPVIEW_RETENTION_HOURS is invalid', async () => {
+      process.env.SNAPVIEW_RETENTION_HOURS = 'banana';
+      const oldFile = 'snapview-1000000000000-abc12345.png';
+      mockReaddir.mockResolvedValue([oldFile] as never);
+      // 25 hours old — older than 24h default, should be deleted
+      mockStat.mockResolvedValue({ mtimeMs: Date.now() - 25 * 60 * 60 * 1000 } as never);
+      mockUnlink.mockResolvedValue(undefined as never);
+
+      await sweepOldCaptures();
+
+      expect(mockUnlink).toHaveBeenCalledTimes(1);
+    });
   });
 });
