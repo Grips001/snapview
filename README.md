@@ -8,17 +8,36 @@ Show Claude what you're looking at — capture any screen region and inject it i
 
 ## Install
 
+Requires [Node.js 18+](https://nodejs.org/) and [Claude Code](https://claude.ai/code).
+
+### npm
+
 ```bash
 npm i -g https://github.com/Grips001/snapview/releases/latest/download/snapview-1.0.0.tgz
 ```
 
-Or with bun:
+### bun
 
 ```bash
 bun add -g https://github.com/Grips001/snapview/releases/latest/download/snapview-1.0.0.tgz
 ```
 
-The installer automatically registers the `/snapview` skill and auto-trigger hook into Claude Code. Requires [Claude Code](https://claude.ai/code) to be installed.
+This downloads the pre-built package directly from GitHub Releases — no registry auth needed. The installer automatically registers the `/snapview` skill and auto-trigger hook into Claude Code.
+
+### Verify
+
+```bash
+snapview
+```
+
+A transparent overlay should appear on your screen. Press `Esc` to close it.
+
+### Uninstall
+
+```bash
+snapview uninstall   # Remove skill, hooks, and settings
+npm uninstall -g snapview
+```
 
 ## Usage
 
@@ -53,16 +72,6 @@ Snapview is an Electron app that creates a transparent fullscreen overlay on you
 - **macOS** — Requires Screen Recording permission (prompted on first use)
 - **Linux/X11** — Supported with GPU compositing workarounds applied automatically
 
-## Manage installation
-
-```bash
-# Re-register skill and hooks (e.g., after Claude Code reinstall)
-snapview install
-
-# Remove skill, hooks, and settings entries
-snapview uninstall
-```
-
 ## Configuration
 
 | Environment Variable | Default | Description |
@@ -71,12 +80,6 @@ snapview uninstall
 | `SNAPVIEW_RETENTION_HOURS` | `24` | Hours to retain temporary screenshots before cleanup |
 
 Set these in `~/.claude/settings.json` under the `env` key.
-
-## Requirements
-
-- Node.js 18+
-- [Claude Code](https://claude.ai/code) (for skill integration)
-- A display server (X11, Windows Desktop, macOS Quartz)
 
 ## License
 
