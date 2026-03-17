@@ -1,0 +1,63 @@
+# Project State
+
+## Project Reference
+
+See: .planning/PROJECT.md (updated 2026-03-16)
+
+**Core value:** Users can share any part of their screen with Claude in under 3 seconds, without leaving the terminal workflow.
+**Current focus:** Phase 1 — Capture Engine
+
+## Current Position
+
+Phase: 1 of 3 (Capture Engine)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-16 — Roadmap created
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: —
+- Total execution time: —
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: —
+- Trend: —
+
+*Updated after each plan completion*
+
+## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- Electron 35.x (not 39.x): Pin to avoid known Linux cursor regression bugs
+- Use `screen` source type (not `window`): Avoids black screen on Chromium-based windows
+- Use `app.getAppPath()` inside Electron: Prevents path resolution breakage after global install
+- X11 primary for Linux: Wayland marked as stretch goal due to XDP portal crash risk
+
+### Pending Todos
+
+None yet.
+
+### Blockers/Concerns
+
+- [Phase 2]: Hook auto-trigger signal format needs validation — structured JSON output from Claude is recommended but exact schema must be defined during Phase 2 planning. Validate against `UserPromptSubmit` hook (confirmed) vs `PostToolUse` (unconfirmed for `additionalContext`).
+- [Phase 2]: `settings.json` merge logic must be read-modify-write, not overwrite — existing hooks config must be preserved.
+
+## Session Continuity
+
+Last session: 2026-03-16
+Stopped at: Roadmap created — ready to plan Phase 1
+Resume file: None
