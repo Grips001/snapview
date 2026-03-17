@@ -50,6 +50,7 @@ function createOverlay(): BrowserWindow {
     alwaysOnTop: true,
     fullscreen: false, // CRITICAL: fullscreen:true ignores x/y and uses primary display
     skipTaskbar: true,
+    enableLargerThanScreen: true,
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
@@ -57,6 +58,13 @@ function createOverlay(): BrowserWindow {
       sandbox: false, // Required for preload IPC — sandbox:true blocks ipcRenderer
     },
   });
+
+  // 'screen-saver' level places the window above the taskbar on Windows.
+  // Default 'floating' level gets pushed above taskbar, shrinking content area.
+  overlay.setAlwaysOnTop(true, 'screen-saver');
+
+  // Force exact display bounds — OS may constrain initial window placement
+  overlay.setBounds({ x, y, width, height });
 
   overlay.loadFile(path.join(__dirname, '../renderer/index.html'));
   return overlay;
