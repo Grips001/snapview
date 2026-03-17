@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **FILE-01**: Screenshots are written to `os.tmpdir()/snapview/` with timestamp+random filenames
 - [x] **FILE-02**: Screenshots older than 24 hours are automatically cleaned up on next launch
-- [x] **FILE-03**: Screenshot is also copied to clipboard when captured
+- [ ] **FILE-03**: Screenshot is also copied to clipboard when captured — *descoped from v1 by user decision*
 
 ### Installation
 
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTG-05 | Phase 3 | Complete |
 | FILE-01 | Phase 1 | Complete |
 | FILE-02 | Phase 3 | Complete |
-| FILE-03 | Phase 3 | Complete |
+| FILE-03 | Phase 3 | Descoped (v2) |
 | INST-01 | Phase 2 | Complete |
 | INST-02 | Phase 1 | Complete |
 | INST-03 | Phase 1 | Complete |
