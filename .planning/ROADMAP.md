@@ -13,7 +13,7 @@ Snapview ships in three phases. Phase 1 builds the cross-platform capture engine
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Capture Engine** - Working cross-platform screen region capture with preview, temp file output, and all platform safety guards
-- [ ] **Phase 2: Claude Code Integration** - `/snapview` skill command, hooks-based auto-trigger, and one-command global install
+- [x] **Phase 2: Claude Code Integration** - `/snapview` skill command, hooks-based auto-trigger, and one-command global install (completed 2026-03-17)
 - [ ] **Phase 3: Capture Lifecycle** - Auto-cleanup, clipboard copy, and screenshot promotion to project directory
 
 ## Phase Details
@@ -46,7 +46,7 @@ Plans:
   2. Claude can emit a structured signal that auto-triggers the capture UI and receives the screenshot path without user typing any command
   3. Running `npm i -g snapview` installs the binary and registers the skill and hooks in `~/.claude/` — available in all Claude Code projects with no further setup
   4. If the Electron process stalls or crashes, the Claude Code hook exits cleanly within 30 seconds rather than hanging the session indefinitely
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 02-01-PLAN.md — SKILL.md template, Stop hook script, and postinstall registration logic
@@ -71,5 +71,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Capture Engine | 5/5 | Complete | 2026-03-17 |
-| 2. Claude Code Integration | 2/3 | In Progress|  |
+| 2. Claude Code Integration | 3/3 | Complete   | 2026-03-17 |
 | 3. Capture Lifecycle | 0/TBD | Not started | - |
