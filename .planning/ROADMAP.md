@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User presses ESC at any point and the overlay closes cleanly — no orphaned processes, no hung terminal
   4. Approved capture is saved as a PNG at `os.tmpdir()/snapview/snapview-{timestamp}-{random}.png` and the path is printed to stdout
   5. The tool works without installing any OS-level dependencies on Windows, macOS, and Linux (X11)
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [ ] 01-01-PLAN.md — Project scaffold, configs, shared types, CLI entry point
@@ -65,6 +65,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Capture Engine | 3/5 | In Progress|  |
+| 1. Capture Engine | 4/5 | In Progress|  |
 | 2. Claude Code Integration | 0/TBD | Not started | - |
 | 3. Capture Lifecycle | 0/TBD | Not started | - |
