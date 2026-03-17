@@ -18,7 +18,9 @@ export async function checkMacOSPermission(): Promise<'granted' | 'denied' | 'un
   if (status === 'granted') return 'granted';
 
   if (status === 'not-determined') {
-    const granted = await systemPreferences.askForMediaAccess('screen');
+    // askForMediaAccess typings don't include 'screen' in some Electron versions,
+    // but the runtime API supports it on macOS — cast required.
+    const granted = await systemPreferences.askForMediaAccess('screen' as 'microphone');
     return granted ? 'granted' : 'denied';
   }
 
