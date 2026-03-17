@@ -28,7 +28,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User presses ESC at any point and the overlay closes cleanly — no orphaned processes, no hung terminal
   4. Approved capture is saved as a PNG at `os.tmpdir()/snapview/snapview-{timestamp}-{random}.png` and the path is printed to stdout
   5. The tool works without installing any OS-level dependencies on Windows, macOS, and Linux (X11)
-**Plans**: TBD
+**Plans:** 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Project scaffold, configs, shared types, CLI entry point
+- [ ] 01-02-PLAN.md — Main process, capture engine, cleanup, preload bridge
+- [ ] 01-03-PLAN.md — Renderer UI — overlay canvas, selection, preview panel
+- [ ] 01-04-PLAN.md — Unit test suite for main process and CLI
+- [ ] 01-05-PLAN.md — Build verification and manual integration checkpoint
 
 ### Phase 2: Claude Code Integration
 **Goal**: Users can trigger a screenshot from inside Claude Code via `/snapview`, Claude can auto-request a screenshot via hooks, and `npm i -g snapview` both installs the binary and configures the Claude Code skill and hooks in one step
@@ -58,6 +65,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Capture Engine | 0/TBD | Not started | - |
+| 1. Capture Engine | 0/5 | Planning complete | - |
 | 2. Claude Code Integration | 0/TBD | Not started | - |
 | 3. Capture Lifecycle | 0/TBD | Not started | - |
