@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-03-17T03:39:34.635Z"
+stopped_at: Completed 01-capture-engine/01-01-PLAN.md
+last_updated: "2026-03-17T03:58:08.207Z"
 last_activity: 2026-03-16 — Roadmap created
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 1
   percent: 0
 ---
 
@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01-capture-engine P01 | 3min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Recent decisions affecting current work:
 - Use `screen` source type (not `window`): Avoids black screen on Chromium-based windows
 - Use `app.getAppPath()` inside Electron: Prevents path resolution breakage after global install
 - X11 primary for Linux: Wayland marked as stretch goal due to XDP portal crash risk
+- [Phase 01-capture-engine]: Pinned electron to 35.7.5 — Linux cursor regression bugs in v36+, Electron 41.x too new for Linux validation
+- [Phase 01-capture-engine]: CLI spawn uses stdio pipe for stdout — machine-parseable file path output per locked decision
+- [Phase 01-capture-engine]: Split tsconfig: nodenext for main process, bundler for renderer — different module resolution contexts
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T03:39:34.631Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: .planning/phases/01-capture-engine/01-UI-SPEC.md
+Last session: 2026-03-17T03:58:08.203Z
+Stopped at: Completed 01-capture-engine/01-01-PLAN.md
+Resume file: None

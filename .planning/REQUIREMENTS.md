@@ -32,8 +32,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Installation
 
 - [ ] **INST-01**: `npm i -g snapview` / `bun add -g snapview` installs AND configures Claude Code integration in one step
-- [ ] **INST-02**: All dependencies (Electron) are bundled — no external tools required
-- [ ] **INST-03**: Works on Windows, macOS, and Linux out of the box
+- [x] **INST-02**: All dependencies (Electron) are bundled — no external tools required
+- [x] **INST-03**: Works on Windows, macOS, and Linux out of the box
 
 ### Platform Safety
 
@@ -96,8 +96,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FILE-02 | Phase 3 | Pending |
 | FILE-03 | Phase 3 | Pending |
 | INST-01 | Phase 2 | Pending |
-| INST-02 | Phase 1 | Pending |
-| INST-03 | Phase 1 | Pending |
+| INST-02 | Phase 1 | Complete |
+| INST-03 | Phase 1 | Complete |
 | PLAT-01 | Phase 1 | Pending |
 | PLAT-02 | Phase 1 | Pending |
 | PLAT-03 | Phase 1 | Pending |
