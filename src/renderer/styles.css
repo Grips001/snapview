@@ -1,0 +1,198 @@
+/* ============================================================
+   Snapview Overlay Renderer — styles.css
+   All visual styling for the capture overlay, preview panel,
+   and permission dialog. Uses CSS custom properties from UI-SPEC.
+   ============================================================ */
+
+/* ----------------------------------------
+   CSS Custom Properties
+   ---------------------------------------- */
+:root {
+  /* Overlay */
+  --dim-overlay: rgba(0, 0, 0, 0.45);
+
+  /* Selection */
+  --selection-border: rgba(255, 255, 255, 0.8);
+  --selection-border-width: 2px;
+
+  /* Hint bar */
+  --hint-bg: rgba(0, 0, 0, 0.60);
+  --hint-text: rgba(255, 255, 255, 0.90);
+  --hint-font-size: 13px;
+
+  /* Preview panel */
+  --panel-bg: rgba(15, 15, 15, 0.92);
+  --panel-border: rgba(255, 255, 255, 0.12);
+  --panel-border-radius: 8px;
+  --panel-padding: 16px;
+
+  /* Buttons */
+  --btn-primary-bg: rgba(255, 255, 255, 0.90);
+  --btn-primary-text: #111111;
+  --btn-ghost-border: rgba(255, 255, 255, 0.40);
+  --btn-ghost-text: rgba(255, 255, 255, 0.90);
+  --btn-height: 44px;
+  --btn-padding-x: 16px;
+  --btn-border-radius: 6px;
+
+  /* Typography */
+  --font-family: system-ui, -apple-system, sans-serif;
+  --font-hint: 400 13px/1.4 var(--font-family);
+  --font-label: 600 14px/1.0 var(--font-family);
+  --font-heading: 600 16px/1.2 var(--font-family);
+  --font-body: 400 14px/1.5 var(--font-family);
+}
+
+/* ----------------------------------------
+   Reset & Base
+   ---------------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Crosshair cursor during selection state */
+body.selecting {
+  cursor: crosshair;
+}
+
+/* ----------------------------------------
+   Canvas Overlay
+   ---------------------------------------- */
+#overlay-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ----------------------------------------
+   Hint Bar
+   ---------------------------------------- */
+#hint-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--hint-bg);
+  color: var(--hint-text);
+  font: var(--font-hint);
+  text-align: center;
+  padding: 4px 8px;
+  z-index: 10;
+}
+
+/* ----------------------------------------
+   Preview Panel
+   ---------------------------------------- */
+#preview-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-border-radius);
+  padding: var(--panel-padding);
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+}
+
+#preview-panel h2 {
+  font: var(--font-heading);
+  color: var(--hint-text);
+  margin-bottom: 16px;
+}
+
+/* ----------------------------------------
+   Preview Image
+   ---------------------------------------- */
+#preview-image {
+  max-width: 480px;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* ----------------------------------------
+   Preview Button Row
+   ---------------------------------------- */
+#preview-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* ----------------------------------------
+   Buttons
+   ---------------------------------------- */
+.btn {
+  min-height: var(--btn-height);
+  padding: 0 var(--btn-padding-x);
+  border-radius: var(--btn-border-radius);
+  font: var(--font-label);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--btn-ghost-border);
+  color: var(--btn-ghost-text);
+}
+
+/* ----------------------------------------
+   Permission Dialog
+   ---------------------------------------- */
+#permission-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-border-radius);
+  padding: var(--panel-padding);
+  z-index: 9999;
+  max-width: 400px;
+  display: none;
+  flex-direction: column;
+}
+
+#permission-dialog h2 {
+  font: var(--font-heading);
+  color: var(--hint-text);
+}
+
+#permission-dialog p {
+  font: var(--font-body);
+  color: var(--hint-text);
+  margin: 16px 0;
+}
+
+#permission-dialog .sequoia-note {
+  font: var(--font-body);
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 8px;
+  font-size: 12px;
+}
