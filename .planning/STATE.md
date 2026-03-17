@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: "03-02 checkpoint:human-verify - awaiting user visual verification"
-last_updated: "2026-03-17T15:59:46.705Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-17T15:59:58.895Z"
 last_activity: 2026-03-17 — build verified, install/uninstall and /snapview confirmed working
 progress:
   total_phases: 3
@@ -90,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 02-claude-code-integration]: Cross-platform mock snapview binary — .cmd wrapper on Windows, sh script on Unix
 - [Phase 03-capture-lifecycle]: screenImage source coords use CSS pixels (not physical) — thumbnailSize is display.size CSS values, * dpr multiplication overshoots on HiDPI
 - [Phase 03-capture-lifecycle]: Screenshot promotion in SKILL.md: Claude-assessed quiet/offer pattern with user override always honored
+- [Phase 03-capture-lifecycle]: SNAPVIEW_RETENTION_HOURS read inside sweepOldCaptures() function body (not module level) for testability without re-import
+- [Phase 03-capture-lifecycle]: clipboard.writeImage wrapped in try/catch — non-fatal, logged, never prevents captureRegion() success
 
 ### Pending Todos
 
@@ -102,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T15:59:16.136Z
-Stopped at: 03-02 checkpoint:human-verify - awaiting user visual verification
+Last session: 2026-03-17T15:59:58.891Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
