@@ -37,8 +37,12 @@ function install() {
   const binaryExists = isClaudeInPath();
 
   if (!dirExists && !binaryExists) {
-    process.stderr.write('Claude Code not detected. Install Claude Code first, then re-run.\n');
-    process.exit(1);
+    // In CI or environments without Claude Code, skip silently
+    if (process.env.CI || process.env.GITHUB_ACTIONS) {
+      return;
+    }
+    process.stderr.write('Claude Code not detected. Install Claude Code first, then re-run: snapview install\n');
+    process.exit(0); // Exit cleanly — don't break npm install
   }
 
   // If binary found but dir doesn't exist, create it
