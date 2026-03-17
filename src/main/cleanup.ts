@@ -2,10 +2,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 
-const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
-
 /**
- * Sweep os.tmpdir()/snapview/ and delete PNG files older than 24 hours.
+ * Sweep os.tmpdir()/snapview/ and delete PNG files older than SNAPVIEW_RETENTION_HOURS (default 24h).
  * Best-effort: errors on individual files are silently ignored.
  * The entire function is wrapped in try/catch so a missing directory does not throw.
  *
@@ -13,6 +11,8 @@ const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
  * to avoid blocking the overlay from appearing.
  */
 export async function sweepOldCaptures(): Promise<void> {
+  const retentionHours = parseFloat(process.env.SNAPVIEW_RETENTION_HOURS ?? '') || 24;
+  const retentionMs = retentionHours * 60 * 60 * 1000;
   const snapviewDir = path.join(os.tmpdir(), 'snapview');
   try {
     const entries = await fs.readdir(snapviewDir);
@@ -22,7 +22,7 @@ export async function sweepOldCaptures(): Promise<void> {
       if (!entry.startsWith('snapview-') || !entry.endsWith('.png')) continue;
       const fullPath = path.join(snapviewDir, entry);
       const stat = await fs.stat(fullPath);
-      if (now - stat.mtimeMs > TWENTY_FOUR_HOURS_MS) {
+      if (now - stat.mtimeMs > retentionMs) {
         await fs.unlink(fullPath).catch(() => {}); // Best-effort; ignore errors
       }
     }
