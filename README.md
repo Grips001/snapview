@@ -9,10 +9,20 @@ Show Claude what you're looking at — capture any screen region and inject it i
 ## Install
 
 ```bash
-npm i -g snapview
-# or
-bun add -g snapview
+npm i -g @grips001/snapview --registry=https://npm.pkg.github.com
 ```
+
+Or with bun:
+
+```bash
+bun add -g @grips001/snapview --registry=https://npm.pkg.github.com
+```
+
+> **First time using GitHub Packages?** You need to authenticate once:
+> ```bash
+> npm login --registry=https://npm.pkg.github.com
+> ```
+> Use your GitHub username, and a [Personal Access Token](https://github.com/settings/tokens) with `read:packages` scope as the password.
 
 The installer automatically registers the `/snapview` skill and auto-trigger hook into Claude Code. Requires [Claude Code](https://claude.ai/code) to be installed.
 
