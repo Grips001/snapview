@@ -37,10 +37,6 @@ function install() {
   const binaryExists = isClaudeInPath();
 
   if (!dirExists && !binaryExists) {
-    // In CI or environments without Claude Code, skip silently
-    if (process.env.CI || process.env.GITHUB_ACTIONS) {
-      return;
-    }
     process.stderr.write('Claude Code not detected. Install Claude Code first, then re-run: snapview install\n');
     process.exit(0); // Exit cleanly — don't break npm install
   }
@@ -166,6 +162,10 @@ function uninstall() {
 
 // Auto-run install when executed directly (npm postinstall)
 if (require.main === module) {
+  // In CI, skip — Claude Code won't be installed
+  if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    process.exit(0);
+  }
   install();
 }
 
