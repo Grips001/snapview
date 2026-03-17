@@ -42,6 +42,9 @@ let startY = 0;
 let endX = 0;
 let endY = 0;
 
+// HiDPI: devicePixelRatio for canvas scaling
+let dpr = 1;
+
 // ----------------------------------------
 // DOM references (populated on DOMContentLoaded)
 // ----------------------------------------
@@ -64,10 +67,13 @@ let btnOpenSettings: HTMLButtonElement;
  */
 function drawDimOverlay(): void {
   if (!screenImage) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(screenImage, 0, 0, canvas.width, canvas.height);
+  // Use CSS pixel dimensions (ctx is scaled by dpr)
+  const w = canvas.width / dpr;
+  const h = canvas.height / dpr;
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(screenImage, 0, 0, w, h);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, w, h);
 }
 
 /**
@@ -93,8 +99,9 @@ function drawSelection(sx: number, sy: number, ex: number, ey: number): void {
   // Punch through the dim layer to show full-brightness selection content:
   // Clear the dim layer pixels in the selection rect, then redraw just that region
   // of the screen image at full brightness.
+  // Source coords must be in physical pixels (screenImage is at native resolution).
   ctx.clearRect(x, y, width, height);
-  ctx.drawImage(screenImage, x, y, width, height, x, y, width, height);
+  ctx.drawImage(screenImage, x * dpr, y * dpr, width * dpr, height * dpr, x, y, width, height);
 
   // Draw 2px white selection border
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
@@ -119,11 +126,12 @@ function transitionToPreviewing(): void {
   const height = Math.abs(endY - startY);
 
   // Crop the selection from the screen image into a temporary canvas
+  // Source coords in physical pixels, output at physical resolution for quality
   const cropCanvas = document.createElement('canvas');
-  cropCanvas.width = width;
-  cropCanvas.height = height;
+  cropCanvas.width = width * dpr;
+  cropCanvas.height = height * dpr;
   const cropCtx = cropCanvas.getContext('2d')!;
-  cropCtx.drawImage(screenImage!, x, y, width, height, 0, 0, width, height);
+  cropCtx.drawImage(screenImage!, x * dpr, y * dpr, width * dpr, height * dpr, 0, 0, width * dpr, height * dpr);
 
   // Set preview image source
   previewImage.src = cropCanvas.toDataURL('image/png');
@@ -280,9 +288,14 @@ async function init(): Promise<void> {
   img.onload = () => {
     screenImage = img;
 
-    // Size canvas to the full window
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Size canvas backing buffer to physical pixels for HiDPI accuracy.
+    // ctx.scale(dpr) lets all drawing coords stay in CSS pixels (matching mouse events).
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.scale(dpr, dpr);
 
     // Draw initial dim overlay
     drawDimOverlay();
