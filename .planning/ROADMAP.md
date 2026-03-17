@@ -61,7 +61,11 @@ Plans:
   1. Screenshots older than 24 hours are automatically deleted from the temp directory on the next launch — the temp directory does not accumulate files over time
   2. Every approved capture is automatically copied to the system clipboard alongside being injected into Claude
   3. Claude can offer to copy a screenshot to the current project directory, and when accepted, the file persists beyond the 24-hour temp window
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Env-var configurable cleanup retention and automatic clipboard copy on capture
+- [ ] 03-02-PLAN.md — HiDPI overlay fix and SKILL.md screenshot promotion instructions
 
 ## Progress
 
@@ -72,4 +76,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Capture Engine | 5/5 | Complete | 2026-03-17 |
 | 2. Claude Code Integration | 3/3 | Complete   | 2026-03-17 |
-| 3. Capture Lifecycle | 0/TBD | Not started | - |
+| 3. Capture Lifecycle | 0/2 | In progress | - |
