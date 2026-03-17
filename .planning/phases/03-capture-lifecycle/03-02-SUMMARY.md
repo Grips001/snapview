@@ -49,7 +49,7 @@ completed: 2026-03-17
 - **Duration:** 2 min
 - **Started:** 2026-03-17T15:56:21Z
 - **Completed:** 2026-03-17T15:58:12Z
-- **Tasks:** 2 of 3 complete (Task 3 is checkpoint:human-verify, awaiting user)
+- **Tasks:** 3 of 3 complete
 - **Files modified:** 2
 
 ## Accomplishments
@@ -64,7 +64,7 @@ Each task was committed atomically:
 
 1. **Task 1: Fix HiDPI overlay canvas rendering** - `ac18e71` (fix)
 2. **Task 2: Add screenshot promotion instructions to SKILL.md** - `7cd15be` (feat)
-3. **Task 3: Visual verification checkpoint** - awaiting user verification
+3. **Task 3: Visual verification checkpoint** - human-verify approved by user
 
 ## Files Created/Modified
 - `src/renderer/app.ts` - Fixed two drawImage source coord bugs; updated comments to say "CSS pixels"
@@ -77,7 +77,13 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Scope Reduction (User Decision — Post-Execution)
+
+**FILE-03 (Clipboard Copy) removed from v1 scope.**
+
+The clipboard copy feature (`clipboard.writeImage` on capture) was implemented in Plan 01 but subsequently reverted by the user in a separate commit (`04e4454: revert(03): remove clipboard copy feature (FILE-03) — out of scope for v1`). This plan's scope (03-02) covers the HiDPI fix (Task 1) and SKILL.md screenshot promotion / INTG-05 (Task 2). FILE-03 is deferred/removed from v1 per explicit user decision.
+
+No auto-fixes were required for Tasks 1 or 2. Both executed exactly as written.
 
 ## Issues Encountered
 
@@ -88,9 +94,10 @@ None.
 None - no external service configuration required.
 
 ## Next Phase Readiness
-- HiDPI rendering fix is live; overlay should now match screen content on Retina/HiDPI displays
+- HiDPI rendering fix is live and user-verified; overlay matches screen content on Retina/HiDPI displays
 - SKILL.md promotion workflow ready for use in any Claude Code session with snapview installed
-- Awaiting user verification (Task 3 checkpoint) to confirm visual and clipboard behavior
+- User confirmed visual and functional behavior looks correct
+- FILE-03 clipboard copy deferred — not a blocker for v1 release
 
 ---
 *Phase: 03-capture-lifecycle*
