@@ -177,3 +177,32 @@ describe('captureRegion — source correctness verification', () => {
     expect(captureSource).toContain("{ recursive: true }");
   });
 });
+
+describe('captureRegion — clipboard copy (FILE-03)', () => {
+  test('imports clipboard from electron', () => {
+    expect(captureSource).toMatch(/import\s*\{[^}]*clipboard[^}]*\}\s*from\s*'electron'/);
+  });
+
+  test('calls clipboard.writeImage(cropped) after crop', () => {
+    expect(captureSource).toContain('clipboard.writeImage(cropped)');
+  });
+
+  test('wraps clipboard.writeImage in try/catch (non-fatal)', () => {
+    // Verify try appears before clipboard.writeImage and catch appears after
+    const tryPos = captureSource.indexOf('try {');
+    const writeImagePos = captureSource.indexOf('clipboard.writeImage(cropped)');
+    const catchPos = captureSource.indexOf('catch (err)', writeImagePos);
+    expect(tryPos).toBeGreaterThan(-1);
+    expect(writeImagePos).toBeGreaterThan(tryPos);
+    expect(catchPos).toBeGreaterThan(writeImagePos);
+  });
+
+  test('clipboard failure does not prevent file write — writeImage before toPNG()', () => {
+    // clipboard.writeImage must appear BEFORE cropped.toPNG() so that even if clipboard
+    // throws (and is caught), the PNG buffer and file write still happen
+    const writeImagePos = captureSource.indexOf('clipboard.writeImage(cropped)');
+    const toPNGPos = captureSource.indexOf('cropped.toPNG()');
+    expect(writeImagePos).toBeGreaterThan(-1);
+    expect(toPNGPos).toBeGreaterThan(writeImagePos);
+  });
+});
