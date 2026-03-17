@@ -132,6 +132,17 @@ Each task was committed atomically:
 - `bun test` is the regression safety net for all future capture engine changes
 - The 3 source-level verification patterns established here (comment stripping, positional assertion with comment-stripped source, pure function extraction) should be documented as team conventions for future Electron test files
 
+## Self-Check: PASSED
+
+- src/main/capture.test.ts: FOUND
+- src/main/cleanup.test.ts: FOUND
+- src/main/index.test.ts: FOUND
+- bin/snapview.test.cjs: FOUND
+- .planning/phases/01-capture-engine/01-04-SUMMARY.md: FOUND
+- commit ad5c76b: FOUND
+- commit d4559e4: FOUND
+- commit fad0869: FOUND
+
 ---
 *Phase: 01-capture-engine*
 *Completed: 2026-03-17*
