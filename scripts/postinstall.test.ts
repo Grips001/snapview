@@ -26,10 +26,14 @@ let claudeDir: string;
  * Returns { status, stderr }.
  */
 function runInstall(home: string): { status: number; stderr: string } {
+  const env = { ...process.env, HOME: home, USERPROFILE: home };
+  // Strip CI vars so postinstall doesn't short-circuit in GitHub Actions
+  delete env.CI;
+  delete env.GITHUB_ACTIONS;
   const result = spawnSync(
     process.execPath,
     ['-e', `process.env.HOME = process.env.USERPROFILE = '${home.replace(/\\/g, '/')}'; require('${POSTINSTALL_PATH.replace(/\\/g, '/')}').install()`],
-    { encoding: 'utf8' }
+    { encoding: 'utf8', env }
   );
   return { status: result.status ?? 1, stderr: result.stderr ?? '' };
 }
@@ -38,10 +42,13 @@ function runInstall(home: string): { status: number; stderr: string } {
  * Run postinstall.cjs uninstall() in a child process with HOME overridden.
  */
 function runUninstall(home: string): { status: number; stderr: string } {
+  const env = { ...process.env, HOME: home, USERPROFILE: home };
+  delete env.CI;
+  delete env.GITHUB_ACTIONS;
   const result = spawnSync(
     process.execPath,
     ['-e', `process.env.HOME = process.env.USERPROFILE = '${home.replace(/\\/g, '/')}'; require('${POSTINSTALL_PATH.replace(/\\/g, '/')}').uninstall()`],
-    { encoding: 'utf8' }
+    { encoding: 'utf8', env }
   );
   return { status: result.status ?? 1, stderr: result.stderr ?? '' };
 }
