@@ -1,6 +1,23 @@
 #!/usr/bin/env node
 'use strict';
 
+const args = process.argv.slice(2);
+
+// ─── Subcommand routing ─────────────────────────────────────────────────────
+// Handle install/uninstall before loading Electron (which is heavy)
+if (args.length > 0 && args[0] === 'install') {
+  const { install } = require('../scripts/postinstall.cjs');
+  install();
+  process.exit(0);
+}
+
+if (args.length > 0 && args[0] === 'uninstall') {
+  const { uninstall } = require('../scripts/postinstall.cjs');
+  uninstall();
+  process.exit(0);
+}
+
+// ─── Default: Launch Electron capture UI ────────────────────────────────────
 const { spawn } = require('child_process');
 const path = require('path');
 
@@ -11,7 +28,7 @@ const electronPath = require('electron');
 const appPath = path.join(__dirname, '..', 'out', 'main', 'index.js');
 
 // Forward CLI args to the Electron process (after stripping node + script path)
-const child = spawn(electronPath, [appPath, ...process.argv.slice(2)], {
+const child = spawn(electronPath, [appPath, ...args], {
   // stdin + stderr inherited; stdout piped so we can capture the file path output
   stdio: ['inherit', 'pipe', 'inherit'],
 });
