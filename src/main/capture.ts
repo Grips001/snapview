@@ -1,4 +1,4 @@
-import { desktopCapturer, nativeImage, screen, systemPreferences, shell, clipboard } from 'electron';
+import { desktopCapturer, nativeImage, screen, systemPreferences, shell } from 'electron';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
@@ -84,12 +84,6 @@ export async function captureRegion(rect: RegionRect): Promise<CaptureResult> {
   const source = sources[0];
   const fullImage = nativeImage.createFromDataURL(source.thumbnail);
   const cropped = fullImage.crop(physicalRect);
-  // Auto-copy to clipboard (FILE-03) — non-fatal; capture must succeed regardless
-  try {
-    clipboard.writeImage(cropped);
-  } catch (err) {
-    console.error('[snapview] clipboard.writeImage failed (non-fatal):', (err as Error).message);
-  }
   const pngBuffer = cropped.toPNG();
 
   // Write to os.tmpdir()/snapview/ with unique filename (timestamp + random hex)
