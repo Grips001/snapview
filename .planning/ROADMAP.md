@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Capture Engine** - Working cross-platform screen region capture with preview, temp file output, and all platform safety guards
 - [x] **Phase 2: Claude Code Integration** - `/snapview` skill command, hooks-based auto-trigger, and one-command global install (completed 2026-03-17)
-- [ ] **Phase 3: Capture Lifecycle** - Auto-cleanup, clipboard copy, and screenshot promotion to project directory
+- [x] **Phase 3: Capture Lifecycle** - Auto-cleanup, clipboard copy, and screenshot promotion to project directory (completed 2026-03-17)
 
 ## Phase Details
 
@@ -61,7 +61,7 @@ Plans:
   1. Screenshots older than 24 hours are automatically deleted from the temp directory on the next launch — the temp directory does not accumulate files over time
   2. Every approved capture is automatically copied to the system clipboard alongside being injected into Claude
   3. Claude can offer to copy a screenshot to the current project directory, and when accepted, the file persists beyond the 24-hour temp window
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 03-01-PLAN.md — Env-var configurable cleanup retention and automatic clipboard copy on capture
@@ -76,4 +76,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Capture Engine | 5/5 | Complete | 2026-03-17 |
 | 2. Claude Code Integration | 3/3 | Complete   | 2026-03-17 |
-| 3. Capture Lifecycle | 0/2 | In progress | - |
+| 3. Capture Lifecycle | 2/2 | Complete   | 2026-03-17 |

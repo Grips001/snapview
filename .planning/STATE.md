@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-17T15:38:50.424Z"
+stopped_at: "03-02 checkpoint:human-verify - awaiting user visual verification"
+last_updated: "2026-03-17T15:59:46.705Z"
 last_activity: 2026-03-17 — build verified, install/uninstall and /snapview confirmed working
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 3
+  total_plans: 10
+  completed_plans: 10
   percent: 56
 ---
 
@@ -58,6 +58,8 @@ Progress: [█████░░░░░] 56%
 | Phase 02-claude-code-integration P01 | 3min | 2 tasks | 3 files |
 | Phase 02-claude-code-integration P02 | 3min | 2 tasks | 4 files |
 | Phase 02-claude-code-integration P03 | 5min | 2 tasks | 0 files |
+| Phase 03-capture-lifecycle P02 | 2min | 2 tasks | 2 files |
+| Phase 03-capture-lifecycle P01 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -86,6 +88,8 @@ Recent decisions affecting current work:
 - [Phase 02-claude-code-integration]: Subcommand routing checks args[0] before require('electron') — avoids heavy Electron load for install/uninstall
 - [Phase 02-claude-code-integration]: Child-process spawn with HOME/USERPROFILE override for postinstall test isolation — CJS module-level constants prevent in-process mocking
 - [Phase 02-claude-code-integration]: Cross-platform mock snapview binary — .cmd wrapper on Windows, sh script on Unix
+- [Phase 03-capture-lifecycle]: screenImage source coords use CSS pixels (not physical) — thumbnailSize is display.size CSS values, * dpr multiplication overshoots on HiDPI
+- [Phase 03-capture-lifecycle]: Screenshot promotion in SKILL.md: Claude-assessed quiet/offer pattern with user override always honored
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T15:38:50.420Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-capture-lifecycle/03-CONTEXT.md
+Last session: 2026-03-17T15:59:16.136Z
+Stopped at: 03-02 checkpoint:human-verify - awaiting user visual verification
+Resume file: None

@@ -21,7 +21,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **INTG-02**: Claude can auto-trigger the capture UI when it needs to see something
 - [x] **INTG-03**: Global install automatically registers skill and hooks in `~/.claude/` (available in all projects)
 - [x] **INTG-04**: Captured screenshot path is injected into Claude's context via stdout + Read tool
-- [ ] **INTG-05**: Claude can offer to promote an important screenshot to the project directory for long-term reference
+- [x] **INTG-05**: Claude can offer to promote an important screenshot to the project directory for long-term reference
 
 ### File Management
 
@@ -91,7 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTG-02 | Phase 2 | Complete |
 | INTG-03 | Phase 2 | Complete |
 | INTG-04 | Phase 2 | Complete |
-| INTG-05 | Phase 3 | Pending |
+| INTG-05 | Phase 3 | Complete |
 | FILE-01 | Phase 1 | Complete |
 | FILE-02 | Phase 3 | Pending |
 | FILE-03 | Phase 3 | Pending |
