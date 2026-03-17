@@ -99,9 +99,9 @@ function drawSelection(sx: number, sy: number, ex: number, ey: number): void {
   // Punch through the dim layer to show full-brightness selection content:
   // Clear the dim layer pixels in the selection rect, then redraw just that region
   // of the screen image at full brightness.
-  // Source coords must be in physical pixels (screenImage is at native resolution).
+  // Source coords in CSS pixels (screenImage resolution matches display.size CSS pixels).
   ctx.clearRect(x, y, width, height);
-  ctx.drawImage(screenImage, x * dpr, y * dpr, width * dpr, height * dpr, x, y, width, height);
+  ctx.drawImage(screenImage, x, y, width, height, x, y, width, height);
 
   // Draw 2px white selection border
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
@@ -126,12 +126,12 @@ function transitionToPreviewing(): void {
   const height = Math.abs(endY - startY);
 
   // Crop the selection from the screen image into a temporary canvas
-  // Source coords in physical pixels, output at physical resolution for quality
+  // Source coords in CSS pixels, output at physical resolution for quality preview
   const cropCanvas = document.createElement('canvas');
   cropCanvas.width = width * dpr;
   cropCanvas.height = height * dpr;
   const cropCtx = cropCanvas.getContext('2d')!;
-  cropCtx.drawImage(screenImage!, x * dpr, y * dpr, width * dpr, height * dpr, 0, 0, width * dpr, height * dpr);
+  cropCtx.drawImage(screenImage!, x, y, width, height, 0, 0, width * dpr, height * dpr);
 
   // Set preview image source
   previewImage.src = cropCanvas.toDataURL('image/png');
