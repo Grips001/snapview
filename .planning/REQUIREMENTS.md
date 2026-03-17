@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Capture
 
-- [ ] **CAPT-01**: User can trigger a fullscreen dimmed overlay for screen region selection
-- [ ] **CAPT-02**: User can drag-to-select a rectangular screen region with crosshair cursor
-- [ ] **CAPT-03**: User sees a preview of the captured region with "Send to Claude" and "Retake" options
+- [x] **CAPT-01**: User can trigger a fullscreen dimmed overlay for screen region selection
+- [x] **CAPT-02**: User can drag-to-select a rectangular screen region with crosshair cursor
+- [x] **CAPT-03**: User sees a preview of the captured region with "Send to Claude" and "Retake" options
 - [x] **CAPT-04**: User can press ESC at any point to cancel capture and return to Claude
 - [x] **CAPT-05**: Captured image is saved as PNG to OS temp directory with unique filename
 
@@ -82,9 +82,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAPT-01 | Phase 1 | Pending |
-| CAPT-02 | Phase 1 | Pending |
-| CAPT-03 | Phase 1 | Pending |
+| CAPT-01 | Phase 1 | Complete |
+| CAPT-02 | Phase 1 | Complete |
+| CAPT-03 | Phase 1 | Complete |
 | CAPT-04 | Phase 1 | Complete |
 | CAPT-05 | Phase 1 | Complete |
 | INTG-01 | Phase 2 | Pending |

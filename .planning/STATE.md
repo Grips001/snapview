@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-capture-engine/01-02-PLAN.md
-last_updated: "2026-03-17T04:03:40.947Z"
+stopped_at: Completed 01-capture-engine/01-03-PLAN.md
+last_updated: "2026-03-17T04:08:23.852Z"
 last_activity: 2026-03-16 — Roadmap created
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-capture-engine P01 | 3min | 2 tasks | 10 files |
 | Phase 01-capture-engine P02 | 2min | 2 tasks | 6 files |
+| Phase 01-capture-engine P03 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 01-capture-engine]: Split tsconfig: nodenext for main process, bundler for renderer — different module resolution contexts
 - [Phase 01-capture-engine]: askForMediaAccess cast: Electron 35.x typings miss screen type; cast to microphone for compile, runtime works correctly
 - [Phase 01-capture-engine]: tsconfig rootDir=src (not src/main): shared/ files must be within rootDir for TypeScript compilation with nodenext resolution
+- [Phase 01-capture-engine]: Click-without-drag (<5px) calls cancel() — avoids accidental full-screen capture per UI-SPEC
+- [Phase 01-capture-engine]: Canvas clearRect+drawImage for selection cutout — simpler than clip/save/restore, same brightness result
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T04:03:40.943Z
-Stopped at: Completed 01-capture-engine/01-02-PLAN.md
+Last session: 2026-03-17T04:08:23.848Z
+Stopped at: Completed 01-capture-engine/01-03-PLAN.md
 Resume file: None
