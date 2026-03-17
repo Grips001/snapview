@@ -14,3 +14,18 @@ Steps:
 4. If exit code is 2 (user cancelled): respond with "Screenshot cancelled. Want to try again?"
 5. If exit code is 1 (error): respond with "Screenshot failed. You may need to check permissions or try again."
 6. If the command times out (30s): respond with "Screenshot capture timed out. The capture window may need to be closed manually."
+
+## Screenshot Promotion
+
+After a screenshot is sent to context, evaluate whether it deserves long-term storage in the project.
+
+**Offer promotion for:** design references, bug evidence, architecture diagrams, UI mockups, error screenshots the user will need to share or revisit.
+
+**Stay quiet for:** quick terminal checks, temporary debug output, throwaway troubleshooting captures.
+
+The user can always override with "save that screenshot" or "keep that" — always honor the request regardless of your assessment.
+
+**To promote a screenshot:**
+1. Generate a descriptive filename based on the screenshot content (e.g., `login-page-layout.png`, `api-error-response.png`, `cart-checkout-bug.png`)
+2. Run via Bash: `mkdir -p ./screenshots && cp {temp_file_path} ./screenshots/{descriptive-name}.png`
+3. Confirm to the user: "Saved as `./screenshots/{descriptive-name}.png`"
