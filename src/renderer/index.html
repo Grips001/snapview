@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snapview</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <canvas id="overlay-canvas"></canvas>
+  <div id="hint-bar">Drag to select  &middot;  ESC to cancel</div>
+  <div id="preview-panel" style="display: none;">
+    <h2>Capture Preview</h2>
+    <img id="preview-image" alt="Capture preview" />
+    <div id="preview-buttons">
+      <button id="btn-retake" class="btn btn-ghost">Retake</button>
+      <button id="btn-approve" class="btn btn-primary">Send to Claude</button>
+    </div>
+  </div>
+  <div id="permission-dialog" style="display: none;">
+    <h2>Screen Recording Permission Required</h2>
+    <p>snapview needs screen recording access to capture your screen. Open System Settings to grant permission.</p>
+    <p class="sequoia-note">macOS may ask for screen recording permission monthly. This is expected.</p>
+    <button id="btn-open-settings" class="btn btn-primary">Open System Settings</button>
+  </div>
+  <script type="module" src="./app.ts"></script>
+</body>
+</html>
