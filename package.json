@@ -1,12 +1,12 @@
 {
   "name": "snapview",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Screen capture tool for Claude Code — show Claude what you're looking at",
   "license": "MIT",
   "author": "Grips001",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Grips001/snapview.git"
+    "url": "git+https://github.com/Grips001/snapview.git"
   },
   "homepage": "https://github.com/Grips001/snapview",
   "bugs": {
