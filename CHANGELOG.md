@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improved
 
 - Clarified multi-monitor support in README — overlay opens on whichever display the cursor is on
-- Added demo GIF placeholder to README landing page
+- Added demo GIF to README landing page
 - Added security note about temporary screenshot files in shared environments
 
 ## [1.0.0] - 2026-03-17
