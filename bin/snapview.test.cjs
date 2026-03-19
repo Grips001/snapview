@@ -83,3 +83,25 @@ describe('CLI entry point — INST-02', () => {
     expect(cliSource.startsWith('#!/usr/bin/env node')).toBe(true);
   });
 });
+
+describe('Node version check', () => {
+  test('checks process.versions.node for minimum version', () => {
+    expect(cliSource).toContain('process.versions.node');
+  });
+
+  test('requires Node 18 or later', () => {
+    expect(cliSource).toContain('major < 18');
+  });
+
+  test('provides actionable error message with download link', () => {
+    expect(cliSource).toContain('Node.js 18 or later is required');
+    expect(cliSource).toContain('https://nodejs.org/');
+  });
+
+  test('exits with code 1 on version mismatch', () => {
+    // The version check block must exit before Electron is loaded
+    const versionCheckPos = cliSource.indexOf('major < 18');
+    const electronPos = cliSource.indexOf("require('electron')");
+    expect(versionCheckPos).toBeLessThan(electronPos);
+  });
+});

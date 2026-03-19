@@ -26,9 +26,9 @@ const captureSource = readFileSync(
 );
 
 // ─── Filename generation logic (extracted from captureRegion) ────────────────
-// This is the exact same formula used in capture.ts line 92
+// This is the exact same formula used in capture.ts
 function generateCaptureFilename(): string {
-  return `snapview-${Date.now()}-${crypto.randomBytes(8).toString('hex')}.png`;
+  return `snapview-${Date.now()}-${crypto.randomUUID()}.png`;
 }
 
 // ─── ScaleFactor math (extracted from captureRegion) ────────────────────────
@@ -85,9 +85,9 @@ describe('checkMacOSPermission — source verification (PLAT-01, PLAT-05)', () =
 });
 
 describe('captureRegion — filename format (FILE-01)', () => {
-  test('generated filename matches snapview-{timestamp}-{hex16}.png pattern', () => {
+  test('generated filename matches snapview-{timestamp}-{uuid}.png pattern', () => {
     const filename = generateCaptureFilename();
-    expect(filename).toMatch(/^snapview-\d{13,}-[a-f0-9]{16}\.png$/);
+    expect(filename).toMatch(/^snapview-\d{13,}-[a-f0-9-]{36}\.png$/);
   });
 
   test('timestamp portion is a valid millisecond timestamp', () => {
@@ -100,10 +100,10 @@ describe('captureRegion — filename format (FILE-01)', () => {
     expect(timestamp).toBeLessThanOrEqual(after);
   });
 
-  test('hex portion is 16 characters (8 bytes from crypto.randomBytes)', () => {
+  test('UUID portion is a valid v4 UUID (36 chars with dashes)', () => {
     const filename = generateCaptureFilename();
-    const hexPart = filename.match(/-([a-f0-9]{16})\.png$/)![1];
-    expect(hexPart.length).toBe(16);
+    const uuidPart = filename.match(/-([a-f0-9-]{36})\.png$/)![1];
+    expect(uuidPart).toMatch(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
   });
 
   test('each generated filename is unique', () => {
@@ -122,9 +122,9 @@ describe('captureRegion — temp dir path (INST-03)', () => {
     expect(captureSource).not.toContain("'C:/Users'");
   });
 
-  test("temp dir is path.join(os.tmpdir(), 'snapview')", () => {
-    // Verify the exact join pattern is in source
-    expect(captureSource).toContain("path.join(os.tmpdir(), 'snapview')");
+  test("temp dir uses SNAPVIEW_TEMP_DIR from main-process constants", () => {
+    expect(captureSource).toContain('SNAPVIEW_TEMP_DIR');
+    expect(captureSource).toContain("from './constants'");
   });
 });
 
@@ -153,6 +153,18 @@ describe('captureRegion — HiDPI scaleFactor multiplication', () => {
   });
 });
 
+describe('captureRegion — platform-specific error hints', () => {
+  test('provides macOS hint when no sources available', () => {
+    expect(captureSource).toContain('Screen Recording permission');
+    expect(captureSource).toContain("platform === 'darwin'");
+  });
+
+  test('provides Linux/Wayland hint when no sources available', () => {
+    expect(captureSource).toContain('compositor may not support screen capture');
+    expect(captureSource).toContain("platform === 'linux'");
+  });
+});
+
 describe('captureRegion — source correctness verification', () => {
   test('uses screen source type not window type (black screenshot prevention)', () => {
     expect(captureSource).toContain("types: ['screen']");
@@ -175,6 +187,42 @@ describe('captureRegion — source correctness verification', () => {
 
   test('uses fs.mkdir with recursive: true', () => {
     expect(captureSource).toContain("{ recursive: true }");
+  });
+
+  test('uses crypto.randomUUID() for filename generation', () => {
+    expect(captureSource).toContain('crypto.randomUUID()');
+    expect(captureSource).not.toContain('randomBytes');
+  });
+
+  test('captureRegion calls desktopCapturer.getSources directly (no data URL round-trip)', () => {
+    const captureRegionStart = captureSource.indexOf('export async function captureRegion');
+    const afterCaptureRegion = captureSource.slice(captureRegionStart);
+    // Should call desktopCapturer.getSources directly with display dimensions
+    expect(afterCaptureRegion).toContain('desktopCapturer.getSources(');
+    // Should NOT decode from data URL (old pattern)
+    expect(afterCaptureRegion).not.toContain('createFromDataURL');
+    // Should NOT call getScreenSources (which does toDataURL encoding)
+    expect(afterCaptureRegion).not.toContain('getScreenSources()');
+  });
+});
+
+describe('checkMacOSPermission — no askForMediaAccess for screen', () => {
+  test('does NOT call askForMediaAccess in code (only works for microphone/camera)', () => {
+    // Strip comments to check only actual code
+    const codeOnly = captureSource
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*'))
+      .join('\n');
+    expect(codeOnly).not.toContain('askForMediaAccess');
+  });
+
+  test('has no conditional branch for not-determined status', () => {
+    // Strip comments to check only actual code
+    const codeOnly = captureSource
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*'))
+      .join('\n');
+    expect(codeOnly).not.toContain('not-determined');
   });
 });
 

@@ -45,6 +45,10 @@ let endY = 0;
 // HiDPI: devicePixelRatio for canvas scaling
 let dpr = 1;
 
+// Cached dim overlay — drawn once, reused on every mousemove frame.
+// Eliminates 2 full-canvas operations (drawImage + fillRect) per frame.
+let dimCanvas: OffscreenCanvas | null = null;
+
 // ----------------------------------------
 // DOM references (populated on DOMContentLoaded)
 // ----------------------------------------
@@ -59,33 +63,55 @@ let permissionDialog: HTMLElement;
 let btnOpenSettings: HTMLButtonElement;
 
 // ----------------------------------------
+// Rect helper — single source of truth for selection normalization
+// ----------------------------------------
+function normalizeRect(sx: number, sy: number, ex: number, ey: number) {
+  return {
+    x: Math.min(sx, ex),
+    y: Math.min(sy, ey),
+    width: Math.abs(ex - sx),
+    height: Math.abs(ey - sy),
+  };
+}
+
+// ----------------------------------------
 // Drawing functions
 // ----------------------------------------
 
 /**
- * Draw the full-screen dim overlay: screen image + 45% black layer.
+ * Build the cached dim overlay: screen image + 45% black layer.
+ * Called once after the screen image loads. The cache persists across
+ * retake cycles since the screen image never changes.
  */
-function drawDimOverlay(): void {
+function buildDimCache(): void {
   if (!screenImage) return;
-  // Use CSS pixel dimensions (ctx is scaled by dpr)
   const w = canvas.width / dpr;
   const h = canvas.height / dpr;
-  ctx.clearRect(0, 0, w, h);
-  ctx.drawImage(screenImage, 0, 0, w, h);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-  ctx.fillRect(0, 0, w, h);
+
+  dimCanvas = new OffscreenCanvas(canvas.width, canvas.height);
+  const offCtx = dimCanvas.getContext('2d')!;
+  offCtx.scale(dpr, dpr);
+  offCtx.drawImage(screenImage, 0, 0, w, h);
+  offCtx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  offCtx.fillRect(0, 0, w, h);
 }
 
 /**
- * Draw the drag selection: dim overlay with a bright cutout and selection border.
+ * Blit the cached dim overlay to the visible canvas.
+ */
+function drawDimOverlay(): void {
+  if (!dimCanvas) return;
+  // drawImage with OffscreenCanvas is a single GPU blit — no recomposition
+  ctx.drawImage(dimCanvas, 0, 0);
+}
+
+/**
+ * Draw the drag selection: cached dim overlay with a bright cutout and selection border.
  */
 function drawSelection(sx: number, sy: number, ex: number, ey: number): void {
-  if (!screenImage) return;
+  if (!screenImage || !dimCanvas) return;
 
-  const x = Math.min(sx, ex);
-  const y = Math.min(sy, ey);
-  const width = Math.abs(ex - sx);
-  const height = Math.abs(ey - sy);
+  const { x, y, width, height } = normalizeRect(sx, sy, ex, ey);
 
   // Don't draw a selection that's too small (likely a mis-click)
   if (width < 5 || height < 5) {
@@ -93,19 +119,14 @@ function drawSelection(sx: number, sy: number, ex: number, ey: number): void {
     return;
   }
 
-  // Draw the base: screen image + dim layer
+  // Single blit from cached dim overlay (replaces clearRect + drawImage + fillRect)
   drawDimOverlay();
 
-  // Punch through the dim layer to show full-brightness selection content:
-  // Clear the dim layer pixels in the selection rect, then redraw just that region
-  // of the screen image at full brightness.
-  // Source coords in CSS pixels (screenImage resolution matches display.size CSS pixels).
+  // Punch through the dim layer to show full-brightness selection content
   ctx.clearRect(x, y, width, height);
   ctx.drawImage(screenImage, x, y, width, height, x, y, width, height);
 
-  // Draw 2px white selection border
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-  ctx.lineWidth = 2;
+  // Draw selection border (strokeStyle + lineWidth set once in init, not per frame)
   ctx.strokeRect(x, y, width, height);
 }
 
@@ -120,10 +141,7 @@ function transitionToPreviewing(): void {
   currentPhase = 'previewing';
   document.body.classList.remove('selecting');
 
-  const x = Math.min(startX, endX);
-  const y = Math.min(startY, endY);
-  const width = Math.abs(endX - startX);
-  const height = Math.abs(endY - startY);
+  const { x, y, width, height } = normalizeRect(startX, startY, endX, endY);
 
   // Crop the selection from the screen image into a temporary canvas
   // Source coords in CSS pixels, output at physical resolution for quality preview
@@ -133,8 +151,17 @@ function transitionToPreviewing(): void {
   const cropCtx = cropCanvas.getContext('2d')!;
   cropCtx.drawImage(screenImage!, x, y, width, height, 0, 0, width * dpr, height * dpr);
 
-  // Set preview image source
-  previewImage.src = cropCanvas.toDataURL('image/png');
+  // Use toBlob + createObjectURL instead of toDataURL — avoids expensive
+  // PNG base64 encoding and produces a lightweight blob: URL reference
+  cropCanvas.toBlob((blob) => {
+    if (blob) {
+      // Revoke previous blob URL if any (prevent memory leak on retake cycles)
+      if (previewImage.src.startsWith('blob:')) {
+        URL.revokeObjectURL(previewImage.src);
+      }
+      previewImage.src = URL.createObjectURL(blob);
+    }
+  }, 'image/png');
 
   // Show preview panel, hide hint bar
   hintBar.style.display = 'none';
@@ -155,11 +182,17 @@ function transitionToSelecting(): void {
   endX = 0;
   endY = 0;
 
+  // Revoke blob URL to free memory
+  if (previewImage.src.startsWith('blob:')) {
+    URL.revokeObjectURL(previewImage.src);
+    previewImage.src = '';
+  }
+
   // Hide preview panel, show hint bar
   previewPanel.style.display = 'none';
   hintBar.style.display = '';
 
-  // Redraw fresh dim overlay
+  // Redraw fresh dim overlay from cache
   drawDimOverlay();
 }
 
@@ -189,8 +222,7 @@ function onMouseUp(e: MouseEvent): void {
   endX = e.clientX;
   endY = e.clientY;
 
-  const width = Math.abs(endX - startX);
-  const height = Math.abs(endY - startY);
+  const { width, height } = normalizeRect(startX, startY, endX, endY);
 
   // Click-without-drag: cancel per UI-SPEC decision
   if (width < 5 && height < 5) {
@@ -206,12 +238,7 @@ function onMouseUp(e: MouseEvent): void {
 // ----------------------------------------
 
 async function onApprove(): Promise<void> {
-  const x = Math.min(startX, endX);
-  const y = Math.min(startY, endY);
-  const width = Math.abs(endX - startX);
-  const height = Math.abs(endY - startY);
-
-  await window.snapviewBridge.captureRegion({ x, y, width, height });
+  await window.snapviewBridge.captureRegion(normalizeRect(startX, startY, endX, endY));
   // Main process handles stdout output and app.quit()
 }
 
@@ -297,7 +324,15 @@ async function init(): Promise<void> {
     canvas.style.height = window.innerHeight + 'px';
     ctx.scale(dpr, dpr);
 
-    // Draw initial dim overlay
+    // Set stroke properties once — reused for every selection frame.
+    // Canvas 2D state persists until explicitly changed.
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 2;
+
+    // Build cached dim overlay (drawn once, reused on every frame)
+    buildDimCache();
+
+    // Draw initial dim overlay from cache
     drawDimOverlay();
 
     // Register canvas mouse listeners (only after image is ready)

@@ -14,6 +14,15 @@ const HOOK_FILENAME = 'snapview-autotrigger.js';
 const HOOK_PATH = path.join(HOOKS_DIR, HOOK_FILENAME);
 
 /**
+ * Filter predicate: returns true for hook entries NOT belonging to snapview.
+ * Single source of truth — used by both install (idempotent cleanup) and uninstall.
+ */
+function isNotSnapviewHook(entry) {
+  const hooks = entry.hooks || [];
+  return !hooks.some(h => h.command && h.command.includes('snapview-autotrigger'));
+}
+
+/**
  * Check whether the Claude Code binary is in PATH.
  * Returns true if found, false otherwise.
  */
@@ -28,62 +37,60 @@ function isClaudeInPath() {
 }
 
 /**
+ * Read and parse settings.json, returning empty object on any failure.
+ */
+function readSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Write settings object back to settings.json with trailing newline.
+ */
+function writeSettings(settings) {
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+}
+
+/**
  * Install snapview skill and hooks into ~/.claude/.
  * Idempotent — safe to run multiple times.
  */
 function install() {
   // Check Claude Code is installed (dir OR binary must exist)
+  // Short-circuit: skip expensive PATH lookup if dir already exists
   const dirExists = fs.existsSync(CLAUDE_DIR);
-  const binaryExists = isClaudeInPath();
-
-  if (!dirExists && !binaryExists) {
+  if (!dirExists && !isClaudeInPath()) {
     process.stderr.write('Claude Code not detected. Install Claude Code first, then re-run: snapview install\n');
     process.exit(0); // Exit cleanly — don't break npm install
   }
 
-  // If binary found but dir doesn't exist, create it
-  if (!dirExists) {
-    fs.mkdirSync(CLAUDE_DIR, { recursive: true });
-  }
-
-  // Create skills directory and copy SKILL.md template
+  // Ensure directories exist
   fs.mkdirSync(SKILLS_DIR, { recursive: true });
-  const skillTemplatePath = path.join(__dirname, '..', 'claude-integration', 'SKILL.md');
-  const skillContent = fs.readFileSync(skillTemplatePath, 'utf8');
-  fs.writeFileSync(SKILL_PATH, skillContent, 'utf8');
-
-  // Create hooks directory and copy hook script
   fs.mkdirSync(HOOKS_DIR, { recursive: true });
-  const hookSourcePath = path.join(__dirname, 'snapview-autotrigger.js');
-  const hookContent = fs.readFileSync(hookSourcePath, 'utf8');
-  fs.writeFileSync(HOOK_PATH, hookContent, 'utf8');
 
-  // Make executable on non-Windows platforms
+  // Copy files — single syscall each via copyFileSync (vs read+write = 2 syscalls)
+  fs.copyFileSync(path.join(__dirname, '..', 'claude-integration', 'SKILL.md'), SKILL_PATH);
+  fs.copyFileSync(path.join(__dirname, 'snapview-autotrigger.js'), HOOK_PATH);
+
+  // Make hook executable on non-Windows platforms
   if (process.platform !== 'win32') {
     fs.chmodSync(HOOK_PATH, 0o755);
   }
 
   // Read-modify-write settings.json
-  let settings = {};
-  if (fs.existsSync(SETTINGS_PATH)) {
-    try {
-      settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
-    } catch {
-      // Malformed settings.json — start fresh but preserve file by overwriting
-      settings = {};
-    }
-  }
+  const settings = readSettings();
 
   // Ensure hooks structure exists
   if (!settings.hooks) settings.hooks = {};
   if (!settings.hooks.Stop) settings.hooks.Stop = [];
 
   // Remove any existing snapview entry (idempotent)
-  settings.hooks.Stop = settings.hooks.Stop.filter(
-    (entry) => !JSON.stringify(entry).includes('snapview-autotrigger')
-  );
+  settings.hooks.Stop = settings.hooks.Stop.filter(isNotSnapviewHook);
 
-  // Compute hook command path with forward slashes (Windows compatibility per Pitfall 4)
+  // Compute hook command path with forward slashes (Windows compatibility)
   const hookCommandPath = HOOK_PATH.replace(/\\/g, '/');
 
   // Add the new snapview hook entry
@@ -101,8 +108,7 @@ function install() {
   if (!settings.env) settings.env = {};
   settings.env.SNAPVIEW_AUTO_TRIGGER = '1';
 
-  // Write back with trailing newline
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+  writeSettings(settings);
 
   console.log('Snapview installed successfully!');
 }
@@ -111,51 +117,32 @@ function install() {
  * Remove snapview skill and hooks from ~/.claude/.
  */
 function uninstall() {
-  // Remove skill directory
+  // Remove skill directory and hook file
   fs.rmSync(SKILLS_DIR, { recursive: true, force: true });
-
-  // Remove hook file
   fs.rmSync(HOOK_PATH, { force: true });
 
   // Read-modify-write settings.json — remove snapview entries
-  if (fs.existsSync(SETTINGS_PATH)) {
-    let settings;
-    try {
-      settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
-    } catch {
-      // Malformed or missing — nothing to clean up
-      settings = null;
-    }
+  if (!fs.existsSync(SETTINGS_PATH)) return console.log('Snapview uninstalled successfully!');
 
-    if (settings) {
-      // Remove snapview hook entries from Stop array
-      if (settings.hooks && Array.isArray(settings.hooks.Stop)) {
-        settings.hooks.Stop = settings.hooks.Stop.filter(
-          (entry) => !JSON.stringify(entry).includes('snapview-autotrigger')
-        );
+  const settings = readSettings();
+  if (!settings || typeof settings !== 'object') return console.log('Snapview uninstalled successfully!');
 
-        // Clean up empty keys
-        if (settings.hooks.Stop.length === 0) {
-          delete settings.hooks.Stop;
-        }
-        if (Object.keys(settings.hooks).length === 0) {
-          delete settings.hooks;
-        }
-      }
+  // Remove snapview hook entries from Stop array
+  if (settings.hooks && Array.isArray(settings.hooks.Stop)) {
+    settings.hooks.Stop = settings.hooks.Stop.filter(isNotSnapviewHook);
 
-      // Remove the auto-trigger env var
-      if (settings.env && 'SNAPVIEW_AUTO_TRIGGER' in settings.env) {
-        delete settings.env.SNAPVIEW_AUTO_TRIGGER;
-
-        if (Object.keys(settings.env).length === 0) {
-          delete settings.env;
-        }
-      }
-
-      // Write back with trailing newline
-      fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n', 'utf8');
-    }
+    // Clean up empty keys
+    if (settings.hooks.Stop.length === 0) delete settings.hooks.Stop;
+    if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
   }
+
+  // Remove the auto-trigger env var
+  if (settings.env && 'SNAPVIEW_AUTO_TRIGGER' in settings.env) {
+    delete settings.env.SNAPVIEW_AUTO_TRIGGER;
+    if (Object.keys(settings.env).length === 0) delete settings.env;
+  }
+
+  writeSettings(settings);
 
   console.log('Snapview uninstalled successfully!');
 }

@@ -141,7 +141,12 @@ describe('snapview-autotrigger', () => {
     expect(result.stdout.trim()).toBe('');
   });
 
-  test('outputs decision:block with failure message when snapview exits with code 1 (error)', () => {
+  test('passes --auto-trigger flag to snapview binary', () => {
+    const hookSource = fs.readFileSync(HOOK_SCRIPT, 'utf-8');
+    expect(hookSource).toContain("'--auto-trigger'");
+  });
+
+  test('exits silently when snapview exits with code 1 (error) — does not block Claude', () => {
     const binDir = createMockSnapview(1, '');
     const originalPath = process.env.PATH ?? '';
     const newPath = `${binDir}${path.delimiter}${originalPath}`;
@@ -156,10 +161,8 @@ describe('snapview-autotrigger', () => {
       PATH: newPath,
     });
 
+    // Failure should NOT block Claude — exit silently, no stdout output
     expect(result.status).toBe(0);
-    const parsed = JSON.parse(result.stdout.trim());
-    expect(parsed.decision).toBe('block');
-    // Should contain failure message
-    expect(parsed.reason.toLowerCase()).toContain('fail');
+    expect(result.stdout.trim()).toBe('');
   });
 });

@@ -1,6 +1,18 @@
 #!/usr/bin/env node
 'use strict';
 
+// ─── Node version check ───────────────────────────────────────────────────────
+// parseInt stops at the first non-numeric char (the dot), extracting the major version
+// with zero array allocations (vs split('.').map(Number))
+const major = parseInt(process.versions.node, 10);
+if (major < 18) {
+  process.stderr.write(
+    `[snapview] Node.js 18 or later is required (you have ${process.versions.node}).\n` +
+    `[snapview] Download the latest LTS from https://nodejs.org/\n`
+  );
+  process.exit(1);
+}
+
 const args = process.argv.slice(2);
 
 // ─── Subcommand routing ─────────────────────────────────────────────────────

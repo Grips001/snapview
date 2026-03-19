@@ -1,11 +1,17 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import os from 'os';
+import { SNAPVIEW_TEMP_DIR } from './constants';
+
+// Filename pattern: snapview-{timestamp}-{uuid}.png
+// Extract the millisecond timestamp to determine age without a stat syscall.
+const TIMESTAMP_REGEX = /^snapview-(\d+)-/;
 
 /**
- * Sweep os.tmpdir()/snapview/ and delete PNG files older than SNAPVIEW_RETENTION_HOURS (default 24h).
+ * Sweep SNAPVIEW_TEMP_DIR and delete PNG files older than SNAPVIEW_RETENTION_HOURS (default 24h).
  * Best-effort: errors on individual files are silently ignored.
  * The entire function is wrapped in try/catch so a missing directory does not throw.
+ *
+ * Uses the embedded timestamp in the filename to determine age — avoids N stat syscalls.
  *
  * IMPORTANT: Callers must fire-and-forget (no await on the critical path)
  * to avoid blocking the overlay from appearing.
@@ -13,17 +19,16 @@ import os from 'os';
 export async function sweepOldCaptures(): Promise<void> {
   const retentionHours = parseFloat(process.env.SNAPVIEW_RETENTION_HOURS ?? '') || 24;
   const retentionMs = retentionHours * 60 * 60 * 1000;
-  const snapviewDir = path.join(os.tmpdir(), 'snapview');
+  const cutoff = Date.now() - retentionMs;
   try {
-    const entries = await fs.readdir(snapviewDir);
-    const now = Date.now();
+    const entries = await fs.readdir(SNAPVIEW_TEMP_DIR);
     for (const entry of entries) {
-      // Only process files matching the snapview-*.png naming convention
-      if (!entry.startsWith('snapview-') || !entry.endsWith('.png')) continue;
-      const fullPath = path.join(snapviewDir, entry);
-      const stat = await fs.stat(fullPath);
-      if (now - stat.mtimeMs > retentionMs) {
-        await fs.unlink(fullPath).catch(() => {}); // Best-effort; ignore errors
+      if (!entry.endsWith('.png')) continue;
+      const match = TIMESTAMP_REGEX.exec(entry);
+      if (!match) continue;
+      const timestamp = Number(match[1]);
+      if (timestamp < cutoff) {
+        await fs.unlink(path.join(SNAPVIEW_TEMP_DIR, entry)).catch(() => {});
       }
     }
   } catch {

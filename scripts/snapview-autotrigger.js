@@ -2,7 +2,6 @@
 'use strict';
 
 const { execFileSync } = require('child_process');
-const process = require('process');
 
 let input = '';
 process.stdin.on('data', (chunk) => { input += chunk; });
@@ -23,24 +22,24 @@ process.stdin.on('end', () => {
 
   const lastMessage = hookInput.last_assistant_message || '';
 
-  // Check for trigger signal — two approaches:
-  // 1. Attempt to parse last_assistant_message as JSON and check for snapview_capture key
-  // 2. Scan for the JSON signal as a substring (Claude may embed it within prose)
+  // Check for trigger signal — fast substring scan first, then structured parse.
+  // Substring check is O(n) with no allocations; JSON.parse on prose messages
+  // throws an exception (expensive stack capture) on 99.99% of calls.
   let triggered = false;
 
-  // Method 1: Try to parse full message as JSON
-  try {
-    const parsed = JSON.parse(lastMessage);
-    if (parsed && parsed.snapview_capture === true) {
-      triggered = true;
+  if (lastMessage.includes('snapview_capture')) {
+    // Signal keyword found — try structured parse for exact match
+    try {
+      const parsed = JSON.parse(lastMessage);
+      if (parsed && parsed.snapview_capture === true) {
+        triggered = true;
+      }
+    } catch {
+      // Not pure JSON — check for embedded signal substring
+      if (lastMessage.includes('{"snapview_capture":true')) {
+        triggered = true;
+      }
     }
-  } catch {
-    // Not pure JSON — try substring scan below
-  }
-
-  // Method 2: Substring scan for the signal pattern
-  if (!triggered && lastMessage.includes('{"snapview_capture":true')) {
-    triggered = true;
   }
 
   if (!triggered) {
@@ -51,7 +50,7 @@ process.stdin.on('end', () => {
   // Trigger detected — run the snapview binary
   let filePath;
   try {
-    const stdout = execFileSync('snapview', [], { timeout: 32000, encoding: 'utf8' });
+    const stdout = execFileSync('snapview', ['--auto-trigger'], { timeout: 32000, encoding: 'utf8' });
     filePath = stdout.trim();
   } catch (err) {
     // Check if it was a user cancel (exit code 2)
@@ -60,11 +59,8 @@ process.stdin.on('end', () => {
       process.exit(0);
     }
 
-    // Error or timeout — block Claude with failure reason
-    process.stdout.write(JSON.stringify({
-      decision: 'block',
-      reason: 'Screenshot capture failed or timed out. Continue without the screenshot.'
-    }) + '\n');
+    // Error or timeout — exit silently, don't disrupt Claude's response.
+    // The capture was a background enhancement; failure shouldn't interrupt the conversation.
     process.exit(0);
   }
 

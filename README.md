@@ -36,6 +36,14 @@ snapview
 
 A transparent overlay should appear on your screen. Press `Esc` to close it.
 
+### Update
+
+```bash
+npm i -g snapview@latest   # or: bun add -g snapview@latest
+```
+
+The postinstall script re-registers the skill and hooks automatically, so no extra steps are needed.
+
 ### Uninstall
 
 ```bash
@@ -59,7 +67,9 @@ Launches the capture overlay directly. On success (exit code 0), the temporary P
 
 ### Auto-trigger
 
-When enabled (default), Claude can automatically launch a capture when it needs to see your screen. Toggle with:
+When enabled (default), Claude can automatically launch a capture when it needs to see your screen. The first time an auto-trigger occurs, Snapview will ask for your confirmation before proceeding — this approval is remembered so you won't be asked again.
+
+Toggle with:
 
 ```json
 { "env": { "SNAPVIEW_AUTO_TRIGGER": "0" } }
@@ -84,6 +94,10 @@ Snapview is an Electron app that creates a transparent fullscreen overlay on the
 | `SNAPVIEW_RETENTION_HOURS` | `24` | Hours to retain temporary screenshots before cleanup |
 
 Set these in `~/.claude/settings.json` under the `env` key.
+
+## What people are saying
+
+> "SnapView solves one of those small but persistent frustrations — getting screenshots into Claude Code. It's lightweight, intuitive, and makes the workflow feel the way it should have from the start."
 
 ## Security Note
 

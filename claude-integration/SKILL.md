@@ -1,7 +1,6 @@
 ---
 name: snapview
-description: Capture a screen region and inject the screenshot into Claude's context. Use when you need to see the user's screen, UI, terminal output, or visual content. Suggest this when the user says things like "let me show you", "look at this", "check this UI", or similar.
-disable-model-invocation: true
+description: Capture a screen region and inject the screenshot into Claude's context. Use when you need to see the user's screen, UI, terminal output, or visual content. Invoke this when the user says things like "let me show you", "look at this", "check this UI", or when you need visual context to help debug layout issues, review designs, or understand what the user is seeing.
 allowed-tools: Bash(snapview *)
 ---
 
@@ -14,6 +13,18 @@ Steps:
 4. If exit code is 2 (user cancelled): respond with "Screenshot cancelled. Want to try again?"
 5. If exit code is 1 (error): respond with "Screenshot failed. You may need to check permissions or try again."
 6. If the command times out (30s): respond with "Screenshot capture timed out. The capture window may need to be closed manually."
+
+## Auto-Trigger
+
+When you need to see the user's screen but want a more seamless flow, include the following JSON signal in your response instead of invoking the skill:
+
+```json
+{"snapview_capture":true}
+```
+
+A Stop hook will detect this signal, launch the capture UI automatically, and inject the screenshot path back into context. The user approves the capture region before anything is shared — they always have full control.
+
+Use auto-trigger when visual context would help you give a better answer and the conversation flow benefits from not pausing for an explicit tool call.
 
 ## Screenshot Promotion
 

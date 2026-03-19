@@ -98,16 +98,10 @@ describe('Hard exit timeout — PLAT-03', () => {
   });
 
   test('timer calls app.exit(1) on timeout', () => {
-    // Find the setTimeout callback and verify it calls app.exit(1) inside it
-    // We look for app.exit within the setTimeout block specifically
-    expect(indexSource).toContain('app.exit(1)');
+    // Find the setTimeout block and verify it contains app.exit(1)
     const setTimeoutPos = indexSource.indexOf('setTimeout(');
-    // Find the SECOND occurrence of app.exit(1) — first is in Wayland handler,
-    // second is in the setTimeout callback for the hard exit timer
-    const firstExitPos = indexSource.indexOf('app.exit(1)');
-    const secondExitPos = indexSource.indexOf('app.exit(1)', firstExitPos + 1);
-    // The setTimeout callback's app.exit must appear after setTimeout starts
-    expect(secondExitPos).toBeGreaterThan(setTimeoutPos);
+    const timerBlock = indexSource.slice(setTimeoutPos, setTimeoutPos + 200);
+    expect(timerBlock).toContain('app.exit(1)');
   });
 });
 
@@ -142,8 +136,8 @@ describe('Overlay window bounds — PLAT-04', () => {
     expect(indexSource).toContain('transparent: true');
   });
 
-  test('overlay uses alwaysOnTop: true', () => {
-    expect(indexSource).toContain('alwaysOnTop: true');
+  test('overlay uses setAlwaysOnTop with screen-saver level', () => {
+    expect(indexSource).toContain("setAlwaysOnTop(true, 'screen-saver')");
   });
 });
 
@@ -155,8 +149,8 @@ describe('Wayland handler — PLAT-06', () => {
   test('uncaughtException handler calls app.exit(1)', () => {
     // Find the handler and verify it exits
     const handlerStart = indexSource.indexOf("process.on('uncaughtException'");
-    // Extract the handler block (approximately 3 lines)
-    const handlerSection = indexSource.slice(handlerStart, handlerStart + 200);
+    // Extract the handler block — includes Wayland-specific messaging
+    const handlerSection = indexSource.slice(handlerStart, handlerStart + 500);
     expect(handlerSection).toContain('app.exit(1)');
   });
 
@@ -194,5 +188,145 @@ describe('IPC channel registration', () => {
     const handlerStart = indexSource.indexOf('ipcMain.handle(IPC_CHANNELS.GET_SOURCES');
     const handlerSection = indexSource.slice(handlerStart, handlerStart + 300);
     expect(handlerSection).toContain('checkMacOSPermission()');
+  });
+});
+
+describe('Auto-trigger confirmation', () => {
+  test('--auto-trigger flag is detected from process.argv', () => {
+    expect(indexSource).toContain("process.argv.includes('--auto-trigger')");
+  });
+
+  test('isAutoTriggered flag is checked inside app.whenReady before createOverlay call', () => {
+    // Find the whenReady block and verify auto-trigger check appears before createOverlay call
+    const whenReadyPos = indexSource.indexOf('app.whenReady()');
+    const afterReady = indexSource.slice(whenReadyPos);
+    const flagPos = afterReady.indexOf('isAutoTriggered');
+    // Use the semicolon-terminated call to distinguish from the function definition
+    const overlayCallPos = afterReady.indexOf('createOverlay();');
+    expect(flagPos).toBeGreaterThan(-1);
+    expect(overlayCallPos).toBeGreaterThan(-1);
+    expect(flagPos).toBeLessThan(overlayCallPos);
+  });
+
+  test('checkAutoTriggerApproval uses dialog.showMessageBox', () => {
+    expect(indexSource).toContain('dialog.showMessageBox(');
+  });
+
+  test('approval is persisted to config file via writeConfig', () => {
+    expect(indexSource).toContain('autoTriggerApproved');
+    expect(indexSource).toContain('writeConfig(');
+  });
+
+  test('config is stored in ~/.snapview/config.json', () => {
+    expect(indexSource).toContain("'.snapview'");
+    expect(indexSource).toContain("'config.json'");
+  });
+
+  test('denial exits with code 2 via app.exit (no windows exist yet)', () => {
+    // Must use app.exit() not app.quit() when no windows are open (electron#2312)
+    const whenReadyPos = indexSource.indexOf('app.whenReady()');
+    const afterReady = indexSource.slice(whenReadyPos);
+    expect(afterReady).toContain('app.exit(2)');
+  });
+});
+
+describe('Wayland-specific error messaging', () => {
+  test('uncaughtException handler checks for Wayland session', () => {
+    expect(indexSource).toContain('XDG_SESSION_TYPE');
+    expect(indexSource).toContain('WAYLAND_DISPLAY');
+  });
+
+  test('provides actionable hint for Wayland users', () => {
+    expect(indexSource).toContain('Try running on X11');
+  });
+});
+
+describe('Unhandled rejection handler', () => {
+  test("process.on('unhandledRejection') handler is registered", () => {
+    expect(indexSource).toContain("process.on('unhandledRejection'");
+  });
+
+  test('unhandledRejection handler calls app.exit(1)', () => {
+    const handlerStart = indexSource.indexOf("process.on('unhandledRejection'");
+    const handlerSection = indexSource.slice(handlerStart, handlerStart + 200);
+    expect(handlerSection).toContain('app.exit(1)');
+  });
+});
+
+describe('Security hardening', () => {
+  test('sandbox is not explicitly disabled (defaults to true since Electron 20)', () => {
+    expect(indexSource).not.toContain('sandbox: false');
+  });
+
+  test('navigateOnDragDrop is disabled', () => {
+    expect(indexSource).toContain('navigateOnDragDrop: false');
+  });
+
+  test('window open handler denies new windows', () => {
+    expect(indexSource).toContain("setWindowOpenHandler(");
+    expect(indexSource).toContain("action: 'deny'");
+  });
+
+  test('will-navigate is blocked', () => {
+    expect(indexSource).toContain("'will-navigate'");
+    expect(indexSource).toContain('event.preventDefault()');
+  });
+
+  test('hasShadow is false for clean overlay', () => {
+    expect(indexSource).toContain('hasShadow: false');
+  });
+});
+
+describe('Timer cleanup', () => {
+  test('will-quit handler clears hard exit timer', () => {
+    expect(indexSource).toContain("app.on('will-quit'");
+    expect(indexSource).toContain('clearTimeout(hardExitTimer)');
+  });
+});
+
+// ─── Cross-file security verification ────────────────────────────────────────
+const htmlSource = readFileSync(
+  path.join(import.meta.dir, '../renderer/index.html'),
+  'utf-8'
+);
+const preloadSource = readFileSync(
+  path.join(import.meta.dir, '../preload/preload.ts'),
+  'utf-8'
+);
+
+describe('Content Security Policy', () => {
+  test('renderer HTML includes a CSP meta tag', () => {
+    expect(htmlSource).toContain('Content-Security-Policy');
+  });
+
+  test('CSP blocks all by default', () => {
+    expect(htmlSource).toContain("default-src 'none'");
+  });
+
+  test('CSP allows data: URLs for images (screen capture thumbnails)', () => {
+    expect(htmlSource).toContain('img-src');
+    expect(htmlSource).toContain('data:');
+  });
+});
+
+describe('Preload rect validation', () => {
+  test('preload validates rect before forwarding to main', () => {
+    expect(preloadSource).toContain('Number.isFinite');
+    expect(preloadSource).toContain('rect.width <= 0');
+  });
+
+  test('preload strips unexpected properties from rect', () => {
+    // Should construct a new object with only x, y, width, height
+    expect(preloadSource).toContain('x: rect.x');
+    expect(preloadSource).toContain('y: rect.y');
+    expect(preloadSource).toContain('width: rect.width');
+    expect(preloadSource).toContain('height: rect.height');
+  });
+
+  test('preload imports IPC_CHANNELS from shared types (not hardcoded)', () => {
+    expect(preloadSource).toContain("from '../shared/types'");
+    expect(preloadSource).toContain('IPC_CHANNELS.GET_SOURCES');
+    expect(preloadSource).toContain('IPC_CHANNELS.CAPTURE_REGION');
+    expect(preloadSource).toContain('IPC_CHANNELS.CANCEL');
   });
 });
