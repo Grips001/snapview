@@ -6,6 +6,12 @@
 
 Show Claude what you're looking at — capture any screen region and inject it into your Claude Code conversation in under 3 seconds.
 
+<p align="center">
+  <img src="docs/demo.gif" alt="Snapview capture demo" width="720" />
+  <br />
+  <em>Select a region → preview → approve — screenshot lands in your conversation</em>
+</p>
+
 ## Install
 
 Requires [Node.js 18+](https://nodejs.org/) and [Claude Code](https://claude.ai/code).
@@ -63,7 +69,7 @@ in `~/.claude/settings.json`.
 
 ## How it works
 
-Snapview is an Electron app that creates a transparent fullscreen overlay on your current monitor. You drag to select a region, preview the capture, then approve or retake. The screenshot is saved as a temporary PNG in your system temp directory with automatic 24-hour cleanup.
+Snapview is an Electron app that creates a transparent fullscreen overlay on the monitor where your cursor is — **multi-monitor setups are fully supported**, so you can capture from any display without switching focus. You drag to select a region, preview the capture, then approve or retake. The screenshot is saved as a temporary PNG in your system temp directory with automatic 24-hour cleanup.
 
 **Platform support:**
 - **Windows** — Works out of the box
@@ -78,6 +84,14 @@ Snapview is an Electron app that creates a transparent fullscreen overlay on you
 | `SNAPVIEW_RETENTION_HOURS` | `24` | Hours to retain temporary screenshots before cleanup |
 
 Set these in `~/.claude/settings.json` under the `env` key.
+
+## Security Note
+
+Snapview stores screenshots as temporary PNGs in your system temp directory (`os.tmpdir()/snapview/`). These files may contain sensitive content visible on your screen at the time of capture. On shared machines or multi-user systems:
+
+- Files are automatically deleted after 24 hours (configurable via `SNAPVIEW_RETENTION_HOURS`)
+- Set `SNAPVIEW_RETENTION_HOURS=1` for faster cleanup in sensitive environments
+- Promoted screenshots (saved to `./screenshots/`) are **not** auto-cleaned — manage these manually and consider adding `screenshots/` to your `.gitignore`
 
 ## License
 

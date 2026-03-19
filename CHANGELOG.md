@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-03-19
+
+### Improved
+
+- Clarified multi-monitor support in README — overlay opens on whichever display the cursor is on
+- Added demo GIF placeholder to README landing page
+- Added security note about temporary screenshot files in shared environments
+
 ## [1.0.0] - 2026-03-17
 
 ### Added
@@ -22,4 +30,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 24-hour automatic temp file cleanup (configurable via `SNAPVIEW_RETENTION_HOURS`)
 - Screenshot promotion — Claude offers to save important captures to `./screenshots/`
 
+[1.0.4]: https://github.com/Grips001/snapview/releases/tag/v1.0.4
 [1.0.0]: https://github.com/Grips001/snapview/releases/tag/v1.0.0
