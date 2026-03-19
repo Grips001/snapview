@@ -1,6 +1,6 @@
 {
   "name": "snapview",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Screen capture tool for Claude Code — show Claude what you're looking at",
   "license": "MIT",
   "author": "Grips001",
@@ -15,10 +15,14 @@
   "keywords": [
     "claude",
     "claude-code",
+    "anthropic",
+    "ai",
     "screenshot",
     "screen-capture",
+    "visual-context",
     "electron",
-    "cli"
+    "cli",
+    "developer-tools"
   ],
   "main": "out/main/index.js",
   "bin": {

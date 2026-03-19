@@ -11,15 +11,23 @@ Cross-platform screenshot capture CLI built with Electron, designed for Claude C
 ```bash
 bun install          # Install dependencies
 bun run dev          # Electron dev mode with hot reload
-bun run build        # Production build via electron-vite
+bun run build        # Production build via electron-vite (uses electron-vite.config.ts)
 bun run typecheck    # TypeScript checking (main + renderer configs)
-bun test             # Run all tests (bun:test, 76 tests across 6 files)
+bun test             # Run all tests (bun:test, 110 tests across 6 files)
 ```
 
 Global install (triggers postinstall that registers skill + hooks into `~/.claude/`):
 ```bash
 npm i -g .
 ```
+
+## Publishing
+
+Uses **trusted publishing** via GitHub Actions — do not run `npm publish` locally.
+
+1. Bump version in `package.json`, update `CHANGELOG.md`, commit and push to `main`
+2. Create a GitHub Release (tag `v{version}`) — the `publish.yml` workflow builds, tests, and publishes to npm with `--provenance`
+3. CI runs on all pushes/PRs: typecheck → build → test across ubuntu/windows/macos (Node 24)
 
 ## Architecture
 
@@ -32,15 +40,29 @@ npm i -g .
 
 **Claude Code integration:**
 - `claude-integration/SKILL.md` — `/snapview` slash command definition
-- `scripts/snapview-autotrigger.js` — Stop hook that detects signal and auto-launches capture
+- `scripts/snapview-autotrigger.js` — Stop hook that detects `{"snapview_capture":true}` signal (fast substring scan before JSON parse), passes `--auto-trigger` flag, exits silently on failure
 - `scripts/postinstall.cjs` — Installs skill, hook script, and merges settings into `~/.claude/`
+
+**Auto-trigger confirmation:**
+- First auto-triggered capture shows a native OS dialog asking user permission
+- Approval persisted to `~/.snapview/config.json` so it's only asked once
+- Denial exits with code 2 (same as manual cancel)
 
 **IPC channels** (defined in `src/shared/types.ts`):
 - `capture:get-sources` — Fetch screen sources (handles macOS permission check)
 - `capture:region` — Crop region, encode PNG, write to temp, output path to stdout
 - `capture:cancel` — Quit with exit code 2
 
+**Constants:** `src/main/constants.ts` exports `SNAPVIEW_TEMP_DIR` — single source of truth for temp path, kept in main (not shared) to avoid `os`/`path` leaking into sandboxed preload.
+
 **Output:** Ephemeral PNGs in `os.tmpdir()/snapview/` with 24-hour auto-cleanup (configurable via `SNAPVIEW_RETENTION_HOURS`).
+
+## Security
+
+- **Sandbox enabled** — BrowserWindow runs with Chromium sandbox; preload uses only `contextBridge` + `ipcRenderer`
+- **CSP** — Renderer HTML has strict Content-Security-Policy (`default-src 'none'`, allows only local scripts/styles and `data:`/`blob:` for preview images)
+- **Navigation/window guards** — `will-navigate` blocked, `setWindowOpenHandler` denies all
+- **Preload validation** — Runtime rect type checks, NaN/Infinity/bounds validation, property stripping before IPC
 
 ## Platform-Specific Concerns
 
