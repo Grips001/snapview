@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
     permissions:
-      contents: write
+      contents: read
       id-token: write
 
     steps:
@@ -37,11 +37,3 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Pack tarball
-        run: npm pack
-
-      - name: Upload tarball to release
-        run: gh release upload "${{ github.event.release.tag_name }}" snapview-*.tgz --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

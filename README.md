@@ -1,6 +1,6 @@
 # Snapview
 
-[![GitHub release](https://img.shields.io/github/v/release/Grips001/snapview)](https://github.com/Grips001/snapview/releases/latest)
+[![npm](https://img.shields.io/npm/v/snapview)](https://www.npmjs.com/package/snapview)
 [![CI](https://github.com/Grips001/snapview/actions/workflows/ci.yml/badge.svg)](https://github.com/Grips001/snapview/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -10,19 +10,17 @@ Show Claude what you're looking at — capture any screen region and inject it i
 
 Requires [Node.js 18+](https://nodejs.org/) and [Claude Code](https://claude.ai/code).
 
-### npm
-
 ```bash
-npm i -g https://github.com/Grips001/snapview/releases/latest/download/snapview-1.0.0.tgz
+npm i -g snapview
 ```
 
-### bun
+or with bun:
 
 ```bash
-bun add -g https://github.com/Grips001/snapview/releases/latest/download/snapview-1.0.0.tgz
+bun add -g snapview
 ```
 
-This downloads the pre-built package directly from GitHub Releases — no registry auth needed. The installer automatically registers the `/snapview` skill and auto-trigger hook into Claude Code.
+The installer automatically registers the `/snapview` skill and auto-trigger hook into Claude Code.
 
 ### Verify
 
@@ -35,8 +33,8 @@ A transparent overlay should appear on your screen. Press `Esc` to close it.
 ### Uninstall
 
 ```bash
-snapview uninstall   # Remove skill, hooks, and settings
-npm uninstall -g snapview
+snapview uninstall        # Remove skill, hooks, and settings
+npm uninstall -g snapview # or: bun remove -g snapview
 ```
 
 ## Usage
