@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-03-19
+
+### Changed
+
+- Upgraded Electron from 35.7.5 to 41.0.3
+- Upgraded @types/node from ^22.0.0 to ^25.5.0
+- Updated GitHub Actions to v6 (actions/checkout, actions/setup-node) for Node.js 24 compatibility
+- CI and publish workflows now use Node.js 24 LTS
+
 ## [1.0.4] - 2026-03-19
 
 ### Improved
@@ -30,5 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 24-hour automatic temp file cleanup (configurable via `SNAPVIEW_RETENTION_HOURS`)
 - Screenshot promotion — Claude offers to save important captures to `./screenshots/`
 
+[1.0.5]: https://github.com/Grips001/snapview/releases/tag/v1.0.5
 [1.0.4]: https://github.com/Grips001/snapview/releases/tag/v1.0.4
 [1.0.0]: https://github.com/Grips001/snapview/releases/tag/v1.0.0

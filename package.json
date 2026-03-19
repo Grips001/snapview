@@ -1,6 +1,6 @@
 {
   "name": "snapview",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Screen capture tool for Claude Code — show Claude what you're looking at",
   "license": "MIT",
   "author": "Grips001",
@@ -40,14 +40,14 @@
     "postinstall": "node scripts/postinstall.cjs"
   },
   "dependencies": {
-    "electron": "35.7.5",
+    "electron": "41.0.3",
     "commander": "14.0.3"
   },
   "devDependencies": {
     "electron-vite": "5.0.0",
     "electron-builder": "26.8.1",
     "typescript": "5.9.3",
-    "@types/node": "^22.0.0"
+    "@types/node": "^25.5.0"
   },
   "engines": {
     "node": ">=18"
