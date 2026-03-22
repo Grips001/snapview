@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-22
+
+### Removed
+
+- Unused `commander` dependency — was declared but never imported, shipped ~50KB to every consumer for nothing
+- Redundant `package-lock.json` — Bun is the canonical package manager; npm consumers resolve from the registry, not the repo lockfile
+- Redundant `.npmignore` — `package.json` `"files"` whitelist is the authoritative publish filter; `.npmignore` duplicated every exclusion and referenced non-existent paths
+
+### Changed
+
+- DRY: `createOverlay()` now imports `getActiveDisplay()` from `capture.ts` instead of duplicating the cursor/display lookup inline
+- DRY: Removed 3 redundant `clearTimeout(hardExitTimer)` calls from IPC handlers — `app.on('will-quit')` already handles timer cleanup for all `app.quit()` paths (kept the one before `app.exit(2)` which bypasses `will-quit`)
+- Removed `screen` from Electron imports in `index.ts` — no longer used directly after `getActiveDisplay()` refactor
+- Test updated to verify `getActiveDisplay()` usage instead of raw `screen` API calls
+
 ## [1.1.4] - 2026-03-22
 
 ### Fixed
@@ -121,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 24-hour automatic temp file cleanup (configurable via `SNAPVIEW_RETENTION_HOURS`)
 - Screenshot promotion — Claude offers to save important captures to `./screenshots/`
 
+[1.2.0]: https://github.com/Grips001/snapview/releases/tag/v1.2.0
 [1.1.4]: https://github.com/Grips001/snapview/releases/tag/v1.1.4
 [1.1.3]: https://github.com/Grips001/snapview/releases/tag/v1.1.3
 [1.1.2]: https://github.com/Grips001/snapview/releases/tag/v1.1.2

@@ -1,8 +1,8 @@
-import { app, BrowserWindow, dialog, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'path';
 import { promises as fs } from 'fs';
 import os from 'os';
-import { checkMacOSPermission, captureRegion, getScreenSources } from './capture';
+import { checkMacOSPermission, captureRegion, getScreenSources, getActiveDisplay } from './capture';
 import { sweepOldCaptures } from './cleanup';
 import { IPC_CHANNELS } from '../shared/types';
 
@@ -109,8 +109,7 @@ app.on('will-quit', () => clearTimeout(hardExitTimer));
  * the overlay lands on the correct monitor in multi-monitor setups (PLAT-04).
  */
 function createOverlay(): BrowserWindow {
-  const cursorPos = screen.getCursorScreenPoint();
-  const activeDisplay = screen.getDisplayNearestPoint(cursorPos);
+  const activeDisplay = getActiveDisplay();
   const { x, y, width, height } = activeDisplay.bounds;
 
   const overlay = new BrowserWindow({
@@ -173,13 +172,11 @@ ipcMain.handle(IPC_CHANNELS.CAPTURE_REGION, async (_event, rect) => {
     const result = await captureRegion(rect);
     // Emit the file path to stdout — consumed by the CLI entry point (bin/snapview.cjs)
     process.stdout.write(result.filePath + '\n');
-    clearTimeout(hardExitTimer);
     process.exitCode = 0;
     app.quit();
     return result;
   } catch (err) {
     console.error('[snapview] captureRegion failed:', (err as Error).message);
-    clearTimeout(hardExitTimer);
     process.exitCode = 1;
     app.quit();
     return null;
@@ -192,7 +189,6 @@ ipcMain.handle(IPC_CHANNELS.CAPTURE_REGION, async (_event, rect) => {
  * Exit code 2 = cancelled by user (distinguishable from error in Phase 2 hooks).
  */
 ipcMain.handle(IPC_CHANNELS.CANCEL, () => {
-  clearTimeout(hardExitTimer);
   process.exitCode = 2;
   app.quit();
 });

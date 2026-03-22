@@ -10,7 +10,7 @@ import { SNAPVIEW_TEMP_DIR } from './constants';
  * Get the active display based on current cursor position.
  * Single source of truth for display info — avoids redundant screen API calls.
  */
-function getActiveDisplay(): Electron.Display {
+export function getActiveDisplay(): Electron.Display {
   const cursorPos = screen.getCursorScreenPoint();
   return screen.getDisplayNearestPoint(cursorPos);
 }

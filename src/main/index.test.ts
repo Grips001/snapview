@@ -106,9 +106,9 @@ describe('Hard exit timeout — PLAT-03', () => {
 });
 
 describe('Overlay window bounds — PLAT-04', () => {
-  test('BrowserWindow is created with bounds from getDisplayNearestPoint', () => {
-    expect(indexSource).toContain('screen.getDisplayNearestPoint(');
-    expect(indexSource).toContain('screen.getCursorScreenPoint()');
+  test('BrowserWindow is created with display info from getActiveDisplay', () => {
+    expect(indexSource).toContain('getActiveDisplay()');
+    expect(indexSource).toContain('activeDisplay.bounds');
   });
 
   test('fullscreen is set to false in BrowserWindow config', () => {
