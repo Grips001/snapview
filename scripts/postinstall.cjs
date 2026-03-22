@@ -98,7 +98,7 @@ function install() {
     hooks: [
       {
         type: 'command',
-        command: 'node ' + hookCommandPath,
+        command: 'node "' + hookCommandPath + '"',
         timeout: 35,
       },
     ],

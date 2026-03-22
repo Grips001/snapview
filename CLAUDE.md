@@ -25,9 +25,14 @@ npm i -g .
 
 Uses **trusted publishing** via GitHub Actions — do not run `npm publish` locally.
 
-1. Bump version in `package.json`, update `CHANGELOG.md`, commit and push to `main`
-2. Create a GitHub Release (tag `v{version}`) — the `publish.yml` workflow builds, tests, and publishes to npm with `--provenance`
-3. CI runs on all pushes/PRs: typecheck → build → test across ubuntu/windows/macos (Node 24)
+When the user asks to commit and push changes, always perform the full release flow:
+
+1. Bump the patch version in `package.json` (e.g., `1.1.2` → `1.1.3`)
+2. Add a dated entry to `CHANGELOG.md` following the existing format, with a link reference at the bottom
+3. Commit all changes (including lockfile if changed) and push to `main`
+4. Create a git tag `v{version}` pointing to the pushed commit and push it
+5. Create a GitHub Release via `gh release create v{version}` with release notes from the changelog — this triggers the `publish.yml` workflow which builds, tests, and publishes to npm with `--provenance`
+6. CI runs on all pushes/PRs: typecheck → build → test across ubuntu/windows/macos (Node 24)
 
 ## Architecture
 

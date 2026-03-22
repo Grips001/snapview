@@ -103,6 +103,20 @@ describe('install()', () => {
     expect(hasSnapviewHook).toBe(true);
   });
 
+  test('hook command path is quoted for spaces in paths', () => {
+    runInstall(tmpDir);
+
+    const settingsPath = path.join(claudeDir, 'settings.json');
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+
+    const snapviewEntry = settings.hooks.Stop.find((entry: unknown) =>
+      JSON.stringify(entry).includes('snapview-autotrigger')
+    );
+    const command = snapviewEntry.hooks[0].command;
+    // Path portion must be wrapped in double quotes
+    expect(command).toMatch(/^node ".*snapview-autotrigger\.js"$/);
+  });
+
   test('sets SNAPVIEW_AUTO_TRIGGER=1 in settings.json env', () => {
     runInstall(tmpDir);
 
