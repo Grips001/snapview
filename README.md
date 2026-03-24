@@ -4,13 +4,23 @@
 [![CI](https://github.com/Grips001/snapview/actions/workflows/ci.yml/badge.svg)](https://github.com/Grips001/snapview/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Show Claude what you're looking at — capture any screen region and inject it into your Claude Code conversation.
+A capture workflow for Claude Code: region select, preview, approve, auto-inject, and Claude-requested screenshots.
 
 <p align="center">
   <img src="docs/demo.gif" alt="Snapview capture demo" width="720" />
   <br />
   <em>Select a region → preview → approve — screenshot lands in your conversation</em>
 </p>
+
+### Why Snapview when Claude Code can paste images?
+
+Claude Code supports pasting clipboard images (Alt+V on Windows, Cmd+V in iTerm2). That covers quick one-off screenshots well. Snapview is the next level up:
+
+- **Claude-requested captures** — Claude can ask for visual context via an auto-trigger hook, launching the capture UI without you switching windows. Native paste is always user-initiated.
+- **Preview before sharing** — See exactly what you're about to inject into the conversation. Clipboard paste sends whatever is on the clipboard with no gate.
+- **Precision region selection** — Dedicated overlay with drag-to-select, rather than relying on OS screenshot tools to get the right crop first.
+- **Automatic lifecycle** — Temp files are created, tracked, and cleaned up after 24 hours. No leftover screenshots cluttering your desktop.
+- **Cross-platform consistency** — Same workflow on Windows, macOS, and Linux/X11, regardless of terminal or clipboard support.
 
 ## Install
 

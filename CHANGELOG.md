@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-03-24
+
+### Changed
+
+- Repositioned README, package description, and SKILL.md to differentiate from Claude Code's native clipboard paste — leads with workflow differentiators (Claude-requested captures, preview gate, precision region selection, automatic lifecycle, cross-platform consistency)
+- Added "Why Snapview when Claude Code can paste images?" section to README
+- Added "When to use this vs clipboard paste" guidance to SKILL.md so Claude knows when to reach for `/snapview` vs suggesting native paste
+- Updated package description to reflect capture workflow positioning
+
 ## [1.2.0] - 2026-03-22
 
 ### Removed
@@ -136,6 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 24-hour automatic temp file cleanup (configurable via `SNAPVIEW_RETENTION_HOURS`)
 - Screenshot promotion — Claude offers to save important captures to `./screenshots/`
 
+[1.2.1]: https://github.com/Grips001/snapview/releases/tag/v1.2.1
 [1.2.0]: https://github.com/Grips001/snapview/releases/tag/v1.2.0
 [1.1.4]: https://github.com/Grips001/snapview/releases/tag/v1.1.4
 [1.1.3]: https://github.com/Grips001/snapview/releases/tag/v1.1.3

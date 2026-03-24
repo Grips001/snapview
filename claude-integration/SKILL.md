@@ -6,7 +6,11 @@ allowed-tools: Bash(snapview *)
 
 Launch the screen capture UI so the user can select a region of their screen.
 
-Steps:
+## When to use this vs clipboard paste
+
+Use `/snapview` when you need precise region selection, when the user hasn't already taken a screenshot, or when you want to auto-trigger a capture without the user switching context. For quick pastes of screenshots the user already has on their clipboard, native image paste (Alt+V on Windows, Cmd+V in iTerm2) is faster.
+
+## Steps
 1. Tell the user: "Launching capture UI..."
 2. Run: `snapview` using the Bash tool
 3. If exit code is 0: the file path is printed to stdout. Read that file immediately using the Read tool and continue the conversation with the screenshot in context.

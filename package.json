@@ -1,7 +1,7 @@
 {
   "name": "snapview",
-  "version": "1.2.0",
-  "description": "Screen capture tool for Claude Code — show Claude what you're looking at",
+  "version": "1.2.1",
+  "description": "Capture workflow for Claude Code — region select, preview, approve, and Claude-requested screenshots",
   "license": "MIT",
   "author": "Grips001",
   "repository": {
