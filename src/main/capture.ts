@@ -3,7 +3,7 @@ import type { NativeImage } from 'electron';
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import type { RegionRect, CaptureResult } from '../shared/types';
+import type { RegionRect, CaptureResult, DisplayInfo } from '../shared/types';
 import { SNAPVIEW_TEMP_DIR } from './constants';
 
 /**
@@ -40,24 +40,61 @@ export async function checkMacOSPermission(): Promise<'granted' | 'denied' | 'un
 }
 
 /**
- * Get screen sources as data URLs for the renderer overlay background.
- * Uses types: ['screen'] NOT types: ['window'] to avoid black screenshots
- * on Chromium-based windows (Pitfall 4, electron/electron#21687).
+ * Match a desktopCapturer source to a display by display_id.
+ * Uses string comparison because Electron's display_id can be numeric or string
+ * depending on platform. Falls back to index-based matching if display_id fails
+ * (some Linux compositors don't populate display_id reliably).
+ */
+function findSourceForDisplay(
+  sources: Electron.DesktopCapturerSource[],
+  display: Electron.Display,
+  displayIndex: number
+): Electron.DesktopCapturerSource | undefined {
+  // Match by display_id — NOT by array index (known Electron ordering bug)
+  const matched = sources.find((s) => String(s.display_id) === String(display.id));
+  if (matched) return matched;
+  // Fallback: index-based matching with warning
+  if (displayIndex < sources.length) {
+    console.warn(`[snapview] display_id match failed for display ${display.id}, using index ${displayIndex}`);
+    return sources[displayIndex];
+  }
+  return undefined;
+}
+
+/**
+ * Get screen sources for ALL connected displays, matched by display_id.
+ * Returns one DisplayInfo per display. Used by multi-monitor overlay flow.
  * Wrapped in try/catch for Wayland portal crash (PLAT-06).
  */
-export async function getScreenSources(): Promise<{ id: string; thumbnail: string }[]> {
+export async function getAllDisplaySources(): Promise<DisplayInfo[]> {
+  const displays = screen.getAllDisplays();
+
+  // Use the largest connected display's dimensions for thumbnail quality
+  const maxWidth = Math.max(...displays.map((d) => d.size.width));
+  const maxHeight = Math.max(...displays.map((d) => d.size.height));
+
   try {
-    const { width, height } = getActiveDisplay().size;
     const sources = await desktopCapturer.getSources({
       types: ['screen'],
-      thumbnailSize: { width, height },
+      thumbnailSize: { width: maxWidth, height: maxHeight },
     });
-    return sources.map((source) => ({
-      id: source.id,
-      thumbnail: source.thumbnail.toDataURL(),
-    }));
+
+    const result: DisplayInfo[] = [];
+    for (let i = 0; i < displays.length; i++) {
+      const display = displays[i];
+      const matched = findSourceForDisplay(sources, display, i);
+      if (matched) {
+        result.push({
+          displayId: display.id,
+          thumbnail: matched.thumbnail.toDataURL(),
+          scaleFactor: display.scaleFactor,
+        });
+      }
+    }
+
+    return result;
   } catch (err) {
-    console.error('[snapview] getScreenSources failed (Wayland portal?):', (err as Error).message);
+    console.error('[snapview] getAllDisplaySources failed (Wayland portal?):', (err as Error).message);
     return [];
   }
 }
@@ -67,13 +104,14 @@ export async function getScreenSources(): Promise<{ id: string; thumbnail: strin
  * Multiplies rect coordinates by display scaleFactor for HiDPI accuracy (Pitfall 6).
  * Uses NativeImage directly from desktopCapturer — avoids data URL round-trip.
  *
- * Display info is queried once and reused for both scaleFactor and thumbnail sizing.
+ * Uses rect.displayId to find the correct display and source for multi-monitor accuracy.
  */
 export async function captureRegion(rect: RegionRect): Promise<CaptureResult> {
-  // Query display info once — used for both scaleFactor and capture thumbnail size
-  const activeDisplay = getActiveDisplay();
-  const scaleFactor = activeDisplay.scaleFactor;
-  const { width: displayWidth, height: displayHeight } = activeDisplay.size;
+  // Find the target display by displayId, fall back to cursor position
+  const displays = screen.getAllDisplays();
+  const targetDisplay = displays.find((d) => d.id === rect.displayId) ?? getActiveDisplay();
+  const scaleFactor = targetDisplay.scaleFactor;
+  const { width: displayWidth, height: displayHeight } = targetDisplay.size;
 
   // Convert CSS pixels to physical pixels for HiDPI/Retina displays
   const physicalRect = {
@@ -105,8 +143,10 @@ export async function captureRegion(rect: RegionRect): Promise<CaptureResult> {
     throw new Error(`[snapview] No screen sources available.${hint}`);
   }
 
-  // Crop directly from the NativeImage — no data URL encode/decode needed
-  const fullImage: NativeImage = sources[0].thumbnail;
+  // Match the correct source by display_id for multi-monitor accuracy
+  const displayIndex = displays.findIndex((d) => d.id === targetDisplay.id);
+  const matchedSource = findSourceForDisplay(sources, targetDisplay, displayIndex >= 0 ? displayIndex : 0);
+  const fullImage: NativeImage = matchedSource ? matchedSource.thumbnail : sources[0].thumbnail;
   const cropped = fullImage.crop(physicalRect);
   const pngBuffer = cropped.toPNG();
 

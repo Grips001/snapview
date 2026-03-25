@@ -1,8 +1,8 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, screen } from 'electron';
 import path from 'path';
 import { promises as fs } from 'fs';
 import os from 'os';
-import { checkMacOSPermission, captureRegion, getScreenSources, getActiveDisplay } from './capture';
+import { checkMacOSPermission, captureRegion, getAllDisplaySources } from './capture';
 import { sweepOldCaptures } from './cleanup';
 import { IPC_CHANNELS } from '../shared/types';
 
@@ -102,15 +102,18 @@ hardExitTimer.unref(); // Don't keep the process alive for this timer alone
 // Ensure timer is cleared on all quit paths (not just IPC handlers)
 app.on('will-quit', () => clearTimeout(hardExitTimer));
 
-// ─── createOverlay ──────────────────────────────────────────────────────────
+// ─── Multi-monitor overlay windows ──────────────────────────────────────────
+
+/** Map of displayId → BrowserWindow for all overlay windows */
+const overlayWindows: Map<number, BrowserWindow> = new Map();
+
 /**
- * Create the overlay BrowserWindow on the monitor where the cursor currently is.
+ * Create a single overlay BrowserWindow positioned on the given display.
  * Uses explicit x/y/width/height bounds instead of fullscreen:true so that
- * the overlay lands on the correct monitor in multi-monitor setups (PLAT-04).
+ * the overlay lands on the correct monitor (PLAT-04).
  */
-function createOverlay(): BrowserWindow {
-  const activeDisplay = getActiveDisplay();
-  const { x, y, width, height } = activeDisplay.bounds;
+function createSingleOverlay(display: Electron.Display): BrowserWindow {
+  const { x, y, width, height } = display.bounds;
 
   const overlay = new BrowserWindow({
     x,
@@ -147,11 +150,33 @@ function createOverlay(): BrowserWindow {
   return overlay;
 }
 
+/**
+ * Create one overlay per connected display and push display info to each renderer.
+ * Overlays are tracked in overlayWindows map for synchronization.
+ */
+async function createOverlays(): Promise<void> {
+  const displays = screen.getAllDisplays();
+  const displaySources = await getAllDisplaySources();
+
+  for (const display of displays) {
+    const win = createSingleOverlay(display);
+    overlayWindows.set(display.id, win);
+
+    // Push display info to renderer after it finishes loading
+    const info = displaySources.find((s) => s.displayId === display.id);
+    win.webContents.once('did-finish-load', () => {
+      if (info && !win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.DISPLAY_INFO, info);
+      }
+    });
+  }
+}
+
 // ─── IPC handlers ───────────────────────────────────────────────────────────
 
 /**
  * capture:get-sources
- * Returns screen sources for the renderer to use as the overlay background.
+ * Returns screen sources for the renderer (kept for macOS permission check path).
  * Checks macOS permission first; returns { permissionDenied: true } if denied.
  */
 ipcMain.handle(IPC_CHANNELS.GET_SOURCES, async () => {
@@ -159,7 +184,7 @@ ipcMain.handle(IPC_CHANNELS.GET_SOURCES, async () => {
   if (permission === 'denied') {
     return { permissionDenied: true };
   }
-  return getScreenSources();
+  return { permissionGranted: true };
 });
 
 /**
@@ -193,6 +218,38 @@ ipcMain.handle(IPC_CHANNELS.CANCEL, () => {
   app.quit();
 });
 
+/**
+ * capture:drag-started
+ * A renderer started a drag selection. Broadcast selection state to all windows:
+ * the sender gets 'active', all others get 'inactive'.
+ */
+ipcMain.on(IPC_CHANNELS.DRAG_STARTED, (event) => {
+  // Identify sender's display
+  const senderDisplayId = [...overlayWindows.entries()]
+    .find(([_, win]) => !win.isDestroyed() && win.webContents.id === event.sender.id)?.[0];
+
+  for (const [displayId, win] of overlayWindows) {
+    if (!win.isDestroyed()) {
+      win.webContents.send(
+        IPC_CHANNELS.SELECTION_STATE,
+        displayId === senderDisplayId ? 'active' : 'inactive'
+      );
+    }
+  }
+});
+
+/**
+ * capture:selection-reset
+ * User clicked retake — reset all windows to active state.
+ */
+ipcMain.on(IPC_CHANNELS.SELECTION_RESET, () => {
+  for (const [_, win] of overlayWindows) {
+    if (!win.isDestroyed()) {
+      win.webContents.send(IPC_CHANNELS.SELECTION_STATE, 'active');
+    }
+  }
+});
+
 // ─── App lifecycle ───────────────────────────────────────────────────────────
 
 const isAutoTriggered = process.argv.includes('--auto-trigger');
@@ -213,7 +270,7 @@ app.whenReady().then(async () => {
     }
   }
 
-  createOverlay();
+  await createOverlays();
 });
 
 // Prevents orphaned Electron process if all windows are closed via OS controls (PLAT-03)

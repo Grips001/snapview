@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-24
+
+### Added
+
+- **Multi-monitor overlay** — creates one BrowserWindow per connected display simultaneously instead of only covering the cursor's monitor. Drag to select on any monitor; the others dim automatically.
+- Per-display DPI handling — each overlay uses its own display's native `scaleFactor`, eliminating the mixed-DPI bug that affects single spanning windows
+- `desktopCapturer` source matching by `display_id` — captures the correct monitor's content, with index-based fallback for Linux compositors that don't populate `display_id`
+- Multi-monitor IPC synchronization protocol: `DRAG_STARTED`, `SELECTION_STATE`, `SELECTION_RESET` channels coordinate active/inactive state across all overlay windows
+- `DisplayInfo` interface and `displayId` field on `RegionRect` for per-display capture routing
+- `findSourceForDisplay()` helper — shared `display_id` matching logic used by both `getAllDisplaySources()` and `captureRegion()`
+- `getAllDisplaySources()` — fetches and matches screen sources for all connected displays in one pass
+- Preload bridge methods: `onDisplayInfo`, `onSelectionState`, `notifyDragStart`, `notifyRetake`
+- `displayId` validation in preload rect sanitization
+
+### Changed
+
+- Overlay thumbnail resolution now uses the largest connected display's dimensions instead of hardcoded 1920x1080
+- Main process pushes display info to renderers via `DISPLAY_INFO` channel instead of renderers pulling via `GET_SOURCES`
+- `captureRegion()` finds target display by `rect.displayId` with `getActiveDisplay()` fallback
+- Retake flow resets all monitors to active state via `SELECTION_RESET` broadcast
+
+### Removed
+
+- Dead `getScreenSources()` function — replaced by `getAllDisplaySources()` for multi-monitor flow
+- Unused `getActiveDisplay` import from `index.ts` — only used internally within `capture.ts`
+
 ## [1.2.1] - 2026-03-24
 
 ### Changed
@@ -145,6 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 24-hour automatic temp file cleanup (configurable via `SNAPVIEW_RETENTION_HOURS`)
 - Screenshot promotion — Claude offers to save important captures to `./screenshots/`
 
+[1.3.0]: https://github.com/Grips001/snapview/releases/tag/v1.3.0
 [1.2.1]: https://github.com/Grips001/snapview/releases/tag/v1.2.1
 [1.2.0]: https://github.com/Grips001/snapview/releases/tag/v1.2.0
 [1.1.4]: https://github.com/Grips001/snapview/releases/tag/v1.1.4

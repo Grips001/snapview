@@ -40,8 +40,8 @@ When the user asks to commit and push changes, always perform the full release f
 
 1. **CLI entry** (`bin/snapview.cjs`) — Spawns Electron process, captures stdout for file path output
 2. **Main process** (`src/main/`) — Window creation, IPC routing, screen capture via `desktopCapturer`, PNG file output to `os.tmpdir()/snapview/`
-3. **Preload bridge** (`src/preload/preload.ts`) — `contextBridge` exposing 3 IPC channels (no `nodeIntegration`)
-4. **Renderer** (`src/renderer/`) — Canvas-based transparent overlay with drag-to-select, preview panel, approve/retake flow
+3. **Preload bridge** (`src/preload/preload.ts`) — `contextBridge` exposing IPC channels with runtime validation (no `nodeIntegration`)
+4. **Renderer** (`src/renderer/`) — Canvas-based transparent overlay with drag-to-select, preview panel, approve/retake flow; one instance per connected display
 
 **Claude Code integration:**
 - `claude-integration/SKILL.md` — `/snapview` slash command definition
@@ -54,9 +54,13 @@ When the user asks to commit and push changes, always perform the full release f
 - Denial exits with code 2 (same as manual cancel)
 
 **IPC channels** (defined in `src/shared/types.ts`):
-- `capture:get-sources` — Fetch screen sources (handles macOS permission check)
+- `capture:get-sources` — macOS permission check (returns `permissionDenied` or `permissionGranted`)
 - `capture:region` — Crop region, encode PNG, write to temp, output path to stdout
 - `capture:cancel` — Quit with exit code 2
+- `capture:display-info` — Main → renderer: push per-display thumbnail, displayId, scaleFactor after window load
+- `capture:drag-started` — Renderer → main: notify that this window started a selection
+- `capture:selection-state` — Main → renderer: broadcast `'active'`/`'inactive'` to coordinate multi-monitor overlays
+- `capture:selection-reset` — Renderer → main: retake resets all windows to active
 
 **Constants:** `src/main/constants.ts` exports `SNAPVIEW_TEMP_DIR` — single source of truth for temp path, kept in main (not shared) to avoid `os`/`path` leaking into sandboxed preload.
 
@@ -73,8 +77,8 @@ When the user asks to commit and push changes, always perform the full release f
 
 - **macOS:** Screen Recording permission check before capture; handles `not-determined`/`denied`/`granted` states
 - **Linux:** `enable-transparent-visuals` and `disable-gpu` flags applied before `app.whenReady()` to prevent opaque overlay on X11/NVIDIA; Wayland portal dismissal wrapped in try/catch
-- **Multi-monitor:** Overlay positioned on monitor where cursor is via `screen.getCursorScreenPoint()`
-- **HiDPI:** `scaleFactor` applied to region coordinates; canvas scaled by `devicePixelRatio`
+- **Multi-monitor:** One BrowserWindow per connected display via `screen.getAllDisplays()`; sources matched by `display_id` with index fallback; `findSourceForDisplay()` helper shared by `getAllDisplaySources()` and `captureRegion()`
+- **HiDPI:** Per-display `scaleFactor` applied to region coordinates; canvas scaled by `devicePixelRatio`
 - **Hard exit:** 30-second timeout prevents Electron process hangs
 
 ## Testing Patterns

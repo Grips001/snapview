@@ -226,3 +226,66 @@ describe('checkMacOSPermission — no askForMediaAccess for screen', () => {
   });
 });
 
+describe('getAllDisplaySources — multi-monitor source matching', () => {
+  test('function exists and is exported', () => {
+    expect(captureSource).toContain('export async function getAllDisplaySources');
+  });
+
+  test('uses screen.getAllDisplays() to get all connected displays', () => {
+    const fnStart = captureSource.indexOf('export async function getAllDisplaySources');
+    const fnBody = captureSource.slice(fnStart);
+    expect(fnBody).toContain('screen.getAllDisplays()');
+  });
+
+  test('matches sources by display_id via findSourceForDisplay helper', () => {
+    // The display_id matching is extracted into a shared helper used by both functions
+    expect(captureSource).toContain('function findSourceForDisplay');
+    expect(captureSource).toContain('display_id');
+    // getAllDisplaySources delegates to the helper
+    const fnStart = captureSource.indexOf('export async function getAllDisplaySources');
+    const fnBody = captureSource.slice(fnStart, captureSource.indexOf('export async function captureRegion'));
+    expect(fnBody).toContain('findSourceForDisplay(');
+  });
+
+  test('returns DisplayInfo array with displayId, thumbnail, and scaleFactor', () => {
+    const fnStart = captureSource.indexOf('export async function getAllDisplaySources');
+    const fnBody = captureSource.slice(fnStart, captureSource.indexOf('export async function captureRegion'));
+    expect(fnBody).toContain('displayId:');
+    expect(fnBody).toContain('thumbnail:');
+    expect(fnBody).toContain('scaleFactor:');
+  });
+
+  test('has fallback for display_id match failure in shared helper', () => {
+    // The fallback logic lives in findSourceForDisplay, shared by both functions
+    const helperStart = captureSource.indexOf('function findSourceForDisplay');
+    const helperBody = captureSource.slice(helperStart, captureSource.indexOf('export async function getAllDisplaySources'));
+    expect(helperBody).toContain('display_id match failed');
+  });
+
+  test('wrapped in try/catch for Wayland portal crash', () => {
+    const fnStart = captureSource.indexOf('export async function getAllDisplaySources');
+    const fnBody = captureSource.slice(fnStart, captureSource.indexOf('export async function captureRegion'));
+    expect(fnBody).toContain('catch');
+    expect(fnBody).toContain('Wayland portal');
+  });
+});
+
+describe('captureRegion — multi-monitor display_id matching', () => {
+  test('finds target display by rect.displayId', () => {
+    const fnStart = captureSource.indexOf('export async function captureRegion');
+    const fnBody = captureSource.slice(fnStart);
+    expect(fnBody).toContain('rect.displayId');
+  });
+
+  test('falls back to getActiveDisplay() if displayId not found', () => {
+    const fnStart = captureSource.indexOf('export async function captureRegion');
+    const fnBody = captureSource.slice(fnStart);
+    expect(fnBody).toContain('getActiveDisplay()');
+  });
+
+  test('matches source by display_id for correct monitor capture', () => {
+    const fnStart = captureSource.indexOf('export async function captureRegion');
+    const fnBody = captureSource.slice(fnStart);
+    expect(fnBody).toContain('display_id');
+  });
+});

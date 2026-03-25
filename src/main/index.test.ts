@@ -105,10 +105,28 @@ describe('Hard exit timeout — PLAT-03', () => {
   });
 });
 
-describe('Overlay window bounds — PLAT-04', () => {
-  test('BrowserWindow is created with display info from getActiveDisplay', () => {
-    expect(indexSource).toContain('getActiveDisplay()');
-    expect(indexSource).toContain('activeDisplay.bounds');
+describe('Multi-monitor overlay windows — PLAT-04', () => {
+  test('uses screen.getAllDisplays() for multi-monitor support', () => {
+    expect(indexSource).toContain('screen.getAllDisplays()');
+  });
+
+  test('createSingleOverlay creates a BrowserWindow per display', () => {
+    expect(indexSource).toContain('function createSingleOverlay(display');
+    expect(indexSource).toContain('display.bounds');
+  });
+
+  test('createOverlays creates one overlay per connected display', () => {
+    expect(indexSource).toContain('async function createOverlays');
+    // Must iterate displays and create per-display overlays
+    const fnStart = indexSource.indexOf('async function createOverlays');
+    const fnBody = indexSource.slice(fnStart, fnStart + 500);
+    expect(fnBody).toContain('screen.getAllDisplays()');
+    expect(fnBody).toContain('createSingleOverlay');
+  });
+
+  test('overlay windows are tracked in a Map by displayId', () => {
+    expect(indexSource).toContain('overlayWindows: Map<number, BrowserWindow>');
+    expect(indexSource).toContain('overlayWindows.set(');
   });
 
   test('fullscreen is set to false in BrowserWindow config', () => {
@@ -117,10 +135,7 @@ describe('Overlay window bounds — PLAT-04', () => {
     expect(indexSource).not.toContain('fullscreen: true');
   });
 
-  test('BrowserWindow receives explicit x, y, width, height from activeDisplay.bounds', () => {
-    // The source must destructure bounds from the active display
-    expect(indexSource).toContain('activeDisplay.bounds');
-    // And pass x, y, width, height to BrowserWindow
+  test('BrowserWindow receives explicit x, y, width, height from display.bounds', () => {
     const bwConfig = indexSource.slice(
       indexSource.indexOf('new BrowserWindow('),
       indexSource.indexOf('overlay.loadFile(')
@@ -138,6 +153,39 @@ describe('Overlay window bounds — PLAT-04', () => {
 
   test('overlay uses setAlwaysOnTop with screen-saver level', () => {
     expect(indexSource).toContain("setAlwaysOnTop(true, 'screen-saver')");
+  });
+
+  test('display info is pushed to each renderer via DISPLAY_INFO channel', () => {
+    expect(indexSource).toContain('IPC_CHANNELS.DISPLAY_INFO');
+    expect(indexSource).toContain('webContents.send(IPC_CHANNELS.DISPLAY_INFO');
+  });
+
+  test('getAllDisplaySources is called to get per-display thumbnails', () => {
+    expect(indexSource).toContain('getAllDisplaySources()');
+  });
+});
+
+describe('Multi-monitor synchronization IPC', () => {
+  test('DRAG_STARTED handler is registered with ipcMain.on', () => {
+    expect(indexSource).toContain('ipcMain.on(IPC_CHANNELS.DRAG_STARTED');
+  });
+
+  test('DRAG_STARTED handler broadcasts SELECTION_STATE to all windows', () => {
+    const handlerStart = indexSource.indexOf('ipcMain.on(IPC_CHANNELS.DRAG_STARTED');
+    const handlerSection = indexSource.slice(handlerStart, handlerStart + 500);
+    expect(handlerSection).toContain('IPC_CHANNELS.SELECTION_STATE');
+    expect(handlerSection).toContain("'active'");
+    expect(handlerSection).toContain("'inactive'");
+  });
+
+  test('SELECTION_RESET handler is registered with ipcMain.on', () => {
+    expect(indexSource).toContain('ipcMain.on(IPC_CHANNELS.SELECTION_RESET');
+  });
+
+  test('SELECTION_RESET handler resets all windows to active', () => {
+    const handlerStart = indexSource.indexOf('ipcMain.on(IPC_CHANNELS.SELECTION_RESET');
+    const handlerSection = indexSource.slice(handlerStart, handlerStart + 300);
+    expect(handlerSection).toContain("'active'");
   });
 });
 
@@ -196,13 +244,13 @@ describe('Auto-trigger confirmation', () => {
     expect(indexSource).toContain("process.argv.includes('--auto-trigger')");
   });
 
-  test('isAutoTriggered flag is checked inside app.whenReady before createOverlay call', () => {
-    // Find the whenReady block and verify auto-trigger check appears before createOverlay call
+  test('isAutoTriggered flag is checked inside app.whenReady before createOverlays call', () => {
+    // Find the whenReady block and verify auto-trigger check appears before createOverlays call
     const whenReadyPos = indexSource.indexOf('app.whenReady()');
     const afterReady = indexSource.slice(whenReadyPos);
     const flagPos = afterReady.indexOf('isAutoTriggered');
-    // Use the semicolon-terminated call to distinguish from the function definition
-    const overlayCallPos = afterReady.indexOf('createOverlay();');
+    // Use 'await createOverlays()' to match the call site, not the function definition
+    const overlayCallPos = afterReady.indexOf('await createOverlays()');
     expect(flagPos).toBeGreaterThan(-1);
     expect(overlayCallPos).toBeGreaterThan(-1);
     expect(flagPos).toBeLessThan(overlayCallPos);
@@ -315,12 +363,19 @@ describe('Preload rect validation', () => {
     expect(preloadSource).toContain('rect.width <= 0');
   });
 
-  test('preload strips unexpected properties from rect', () => {
-    // Should construct a new object with only x, y, width, height
+  test('preload validates displayId is a finite number', () => {
+    expect(preloadSource).toContain('rect.displayId');
+    expect(preloadSource).toContain("typeof rect.displayId !== 'number'");
+    expect(preloadSource).toContain('Number.isFinite(rect.displayId)');
+  });
+
+  test('preload strips unexpected properties from rect including displayId', () => {
+    // Should construct a new object with only x, y, width, height, displayId
     expect(preloadSource).toContain('x: rect.x');
     expect(preloadSource).toContain('y: rect.y');
     expect(preloadSource).toContain('width: rect.width');
     expect(preloadSource).toContain('height: rect.height');
+    expect(preloadSource).toContain('displayId: rect.displayId');
   });
 
   test('preload imports IPC_CHANNELS from shared types (not hardcoded)', () => {
@@ -328,5 +383,23 @@ describe('Preload rect validation', () => {
     expect(preloadSource).toContain('IPC_CHANNELS.GET_SOURCES');
     expect(preloadSource).toContain('IPC_CHANNELS.CAPTURE_REGION');
     expect(preloadSource).toContain('IPC_CHANNELS.CANCEL');
+  });
+
+  test('preload exposes multi-monitor bridge methods', () => {
+    expect(preloadSource).toContain('IPC_CHANNELS.DISPLAY_INFO');
+    expect(preloadSource).toContain('IPC_CHANNELS.SELECTION_STATE');
+    expect(preloadSource).toContain('IPC_CHANNELS.DRAG_STARTED');
+    expect(preloadSource).toContain('IPC_CHANNELS.SELECTION_RESET');
+  });
+
+  test('preload uses ipcRenderer.send for fire-and-forget notifications', () => {
+    // DRAG_STARTED and SELECTION_RESET are fire-and-forget, should use send not invoke
+    expect(preloadSource).toContain('ipcRenderer.send(IPC_CHANNELS.DRAG_STARTED)');
+    expect(preloadSource).toContain('ipcRenderer.send(IPC_CHANNELS.SELECTION_RESET)');
+  });
+
+  test('preload uses ipcRenderer.on for main→renderer push channels', () => {
+    expect(preloadSource).toContain('ipcRenderer.on(IPC_CHANNELS.DISPLAY_INFO');
+    expect(preloadSource).toContain('ipcRenderer.on(IPC_CHANNELS.SELECTION_STATE');
   });
 });

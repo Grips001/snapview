@@ -4,6 +4,10 @@
  * Canvas-based overlay UI with drag-to-select region selection,
  * live cutout rendering, and a preview panel with approve/retake flow.
  *
+ * Each renderer instance covers one display. The main process pushes
+ * display info (thumbnail, displayId, scaleFactor) after window load.
+ * Multi-monitor synchronization uses active/inactive state via IPC.
+ *
  * All Electron communication is via window.snapviewBridge (contextBridge).
  * Do NOT import from 'electron' directly.
  */
@@ -18,8 +22,12 @@ declare global {
   interface Window {
     snapviewBridge: {
       getSources(): Promise<{ id: string; thumbnail: string }[] | { permissionDenied: true }>;
-      captureRegion(rect: { x: number; y: number; width: number; height: number }): Promise<{ filePath: string } | null>;
+      captureRegion(rect: { x: number; y: number; width: number; height: number; displayId: number }): Promise<{ filePath: string } | null>;
       cancel(): Promise<void>;
+      onDisplayInfo(callback: (info: { displayId: number; thumbnail: string; scaleFactor: number }) => void): void;
+      onSelectionState(callback: (state: 'active' | 'inactive') => void): void;
+      notifyDragStart(): void;
+      notifyRetake(): void;
     };
   }
 }
@@ -44,6 +52,10 @@ let endY = 0;
 
 // HiDPI: devicePixelRatio for canvas scaling
 let dpr = 1;
+
+// Multi-monitor: display identity and active state
+let displayId: number = 0;
+let isActive: boolean = true;
 
 // Cached dim overlay — drawn once, reused on every mousemove frame.
 // Eliminates 2 full-canvas operations (drawImage + fillRect) per frame.
@@ -202,6 +214,11 @@ function transitionToSelecting(): void {
 
 function onMouseDown(e: MouseEvent): void {
   if (currentPhase !== 'selecting') return;
+  if (!isActive) return;
+
+  // Notify main process to dim other monitors
+  window.snapviewBridge.notifyDragStart();
+
   startX = e.clientX;
   startY = e.clientY;
   endX = e.clientX;
@@ -210,14 +227,14 @@ function onMouseDown(e: MouseEvent): void {
 }
 
 function onMouseMove(e: MouseEvent): void {
-  if (!isDragging) return;
+  if (!isDragging || !isActive) return;
   endX = e.clientX;
   endY = e.clientY;
   drawSelection(startX, startY, endX, endY);
 }
 
 function onMouseUp(e: MouseEvent): void {
-  if (!isDragging) return;
+  if (!isDragging || !isActive) return;
   isDragging = false;
   endX = e.clientX;
   endY = e.clientY;
@@ -238,11 +255,16 @@ function onMouseUp(e: MouseEvent): void {
 // ----------------------------------------
 
 async function onApprove(): Promise<void> {
-  await window.snapviewBridge.captureRegion(normalizeRect(startX, startY, endX, endY));
+  await window.snapviewBridge.captureRegion({
+    ...normalizeRect(startX, startY, endX, endY),
+    displayId,
+  });
   // Main process handles stdout output and app.quit()
 }
 
 function onRetake(): void {
+  // Reset all monitors to active state before transitioning
+  window.snapviewBridge.notifyRetake();
   transitionToSelecting();
 }
 
@@ -254,6 +276,43 @@ function onKeyDown(e: KeyboardEvent): void {
   if (e.key === 'Escape') {
     window.snapviewBridge.cancel();
   }
+}
+
+// ----------------------------------------
+// Canvas setup — called when display info arrives
+// ----------------------------------------
+
+function setupCanvas(img: HTMLImageElement): void {
+  screenImage = img;
+
+  // Size canvas backing buffer to physical pixels for HiDPI accuracy.
+  // ctx.scale(dpr) lets all drawing coords stay in CSS pixels (matching mouse events).
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.scale(dpr, dpr);
+
+  // Set stroke properties once — reused for every selection frame.
+  // Canvas 2D state persists until explicitly changed.
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.lineWidth = 2;
+
+  // Build cached dim overlay (drawn once, reused on every frame)
+  buildDimCache();
+
+  // Draw initial dim overlay from cache
+  drawDimOverlay();
+
+  // Register canvas mouse listeners (only after image is ready)
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+
+  // Register button handlers
+  btnApprove.addEventListener('click', onApprove);
+  btnRetake.addEventListener('click', onRetake);
 }
 
 // ----------------------------------------
@@ -278,18 +337,18 @@ async function init(): Promise<void> {
   // Register global keyboard handler
   document.addEventListener('keydown', onKeyDown);
 
-  // Fetch screen sources via preload bridge
-  let sources: { id: string; thumbnail: string }[] | { permissionDenied: true };
+  // Check macOS screen recording permission (no-op on other platforms)
+  let permissionResult: { permissionDenied?: true; permissionGranted?: true };
   try {
-    sources = await window.snapviewBridge.getSources();
+    permissionResult = await window.snapviewBridge.getSources() as typeof permissionResult;
   } catch (err) {
-    console.error('[snapview] getSources failed:', err);
+    console.error('[snapview] permission check failed:', err);
     await window.snapviewBridge.cancel();
     return;
   }
 
   // Handle macOS permission denial
-  if ('permissionDenied' in sources && sources.permissionDenied === true) {
+  if (permissionResult.permissionDenied) {
     permissionDialog.style.display = 'flex';
     hintBar.style.display = 'none';
 
@@ -300,57 +359,38 @@ async function init(): Promise<void> {
     return; // Do not set up canvas listeners
   }
 
-  // Handle empty sources array
-  const sourceList = sources as { id: string; thumbnail: string }[];
-  if (!sourceList || sourceList.length === 0) {
-    console.error('[snapview] No screen sources available.');
-    await window.snapviewBridge.cancel();
-    return;
-  }
+  // Register multi-monitor selection state handler
+  window.snapviewBridge.onSelectionState((state) => {
+    isActive = state === 'active';
+    if (!isActive && dimCanvas) {
+      // This monitor is not the active selection target — show dim overlay only
+      drawDimOverlay();
+      // If previewing, hide the preview panel
+      if (currentPhase === 'previewing') {
+        previewPanel.style.display = 'none';
+        hintBar.style.display = '';
+      }
+    }
+  });
 
-  // Load the first source thumbnail (data URL) into an Image element
-  const firstSource = sourceList[0];
-  const img = new Image();
+  // Wait for display info pushed from main process
+  window.snapviewBridge.onDisplayInfo((info) => {
+    displayId = info.displayId;
 
-  img.onload = () => {
-    screenImage = img;
+    // Load the thumbnail into an Image element
+    const img = new Image();
 
-    // Size canvas backing buffer to physical pixels for HiDPI accuracy.
-    // ctx.scale(dpr) lets all drawing coords stay in CSS pixels (matching mouse events).
-    dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
-    ctx.scale(dpr, dpr);
+    img.onload = () => {
+      setupCanvas(img);
+    };
 
-    // Set stroke properties once — reused for every selection frame.
-    // Canvas 2D state persists until explicitly changed.
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 2;
+    img.onerror = () => {
+      console.error('[snapview] Failed to load screen source thumbnail.');
+      window.snapviewBridge.cancel();
+    };
 
-    // Build cached dim overlay (drawn once, reused on every frame)
-    buildDimCache();
-
-    // Draw initial dim overlay from cache
-    drawDimOverlay();
-
-    // Register canvas mouse listeners (only after image is ready)
-    canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('mouseup', onMouseUp);
-
-    // Register button handlers
-    btnApprove.addEventListener('click', onApprove);
-    btnRetake.addEventListener('click', onRetake);
-  };
-
-  img.onerror = () => {
-    console.error('[snapview] Failed to load screen source thumbnail.');
-    window.snapviewBridge.cancel();
-  };
-
-  img.src = firstSource.thumbnail;
+    img.src = info.thumbnail;
+  });
 }
 
 // ----------------------------------------

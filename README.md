@@ -83,7 +83,7 @@ Disable auto-trigger by setting `SNAPVIEW_AUTO_TRIGGER` to `0` in `~/.claude/set
 
 ## How it works
 
-Snapview is an Electron app that creates a transparent fullscreen overlay on the monitor where your cursor is — multi-monitor setups just work. You drag to select a region, preview the capture, then approve or retake. The screenshot is saved as a temporary PNG in your system temp directory with automatic 24-hour cleanup.
+Snapview is an Electron app that creates a transparent overlay on every connected monitor simultaneously. You drag to select a region on any display — the other monitors dim automatically — preview the capture, then approve or retake. Each overlay uses its own display's native DPI, so captures are pixel-perfect even with mixed-resolution multi-monitor setups. The screenshot is saved as a temporary PNG in your system temp directory with automatic 24-hour cleanup.
 
 **Platform support:**
 - **Windows** — Works out of the box
@@ -156,7 +156,7 @@ Snapview has four layers:
 
 1. **CLI entry** (`bin/snapview.cjs`) — Spawns the Electron process and captures stdout for the file path
 2. **Main process** (`src/main/`) — Window creation, IPC routing, screen capture via `desktopCapturer`, PNG output
-3. **Preload bridge** (`src/preload/`) — `contextBridge` exposing 3 IPC channels with runtime validation
+3. **Preload bridge** (`src/preload/`) — `contextBridge` exposing IPC channels with runtime validation
 4. **Renderer** (`src/renderer/`) — Canvas-based transparent overlay with drag-to-select and preview panel
 
 Claude Code integration lives in `claude-integration/SKILL.md` (skill definition) and `scripts/snapview-autotrigger.js` (Stop hook).
