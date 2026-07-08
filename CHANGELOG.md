@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-07
+
+### Added
+
+- **Ready/Cancel confirmation applet** — a small, non-blocking window shown before every capture (manual or auto-triggered) so users can arrange their screen; "Ready" opens the capture overlay, the X/Cancel button exits with the standard cancel code. Independent of the existing one-time native auto-trigger approval dialog.
+- **Prompt text box in the preview panel** — an optional textarea lets users add context to send alongside the screenshot, plus a Cancel/X button on the preview panel itself
+- `capture:ready-confirmed` IPC channel and `confirmReady()` preload method
+- `?mode=ready` renderer entry point — the Ready applet reuses `index.html`/`app.ts`, rendering only the confirmation dialog and skipping canvas/selection setup
+
+### Changed
+
+- **Breaking: CLI stdout is now a JSON envelope** `{"filePath": "...", "promptText": "..."}` instead of a bare file path — updated in `scripts/snapview-autotrigger.js` and `claude-integration/SKILL.md`'s read-back instructions
+- `RegionRect` and `CaptureResult` gained an optional `promptText` field
+
 ## [1.3.0] - 2026-03-24
 
 ### Added
@@ -171,6 +185,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 24-hour automatic temp file cleanup (configurable via `SNAPVIEW_RETENTION_HOURS`)
 - Screenshot promotion — Claude offers to save important captures to `./screenshots/`
 
+[1.4.0]: https://github.com/Grips001/snapview/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Grips001/snapview/releases/tag/v1.3.0
 [1.2.1]: https://github.com/Grips001/snapview/releases/tag/v1.2.1
 [1.2.0]: https://github.com/Grips001/snapview/releases/tag/v1.2.0

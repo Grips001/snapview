@@ -102,7 +102,8 @@ describe('snapview-autotrigger', () => {
 
   test('outputs decision:block when last_assistant_message contains snapview_capture signal', () => {
     const mockFilePath = '/tmp/snapview-test-capture.png';
-    const binDir = createMockSnapview(0, mockFilePath);
+    const mockStdout = JSON.stringify({ filePath: mockFilePath, promptText: '' });
+    const binDir = createMockSnapview(0, mockStdout);
     const originalPath = process.env.PATH ?? '';
     const newPath = `${binDir}${path.delimiter}${originalPath}`;
 
@@ -120,6 +121,30 @@ describe('snapview-autotrigger', () => {
     const parsed = JSON.parse(result.stdout.trim());
     expect(parsed.decision).toBe('block');
     expect(parsed.reason).toContain(mockFilePath);
+  });
+
+  test('includes the user note in the block reason when promptText is present', () => {
+    const mockFilePath = '/tmp/snapview-test-capture.png';
+    const mockStdout = JSON.stringify({ filePath: mockFilePath, promptText: 'notice the red button' });
+    const binDir = createMockSnapview(0, mockStdout);
+    const originalPath = process.env.PATH ?? '';
+    const newPath = `${binDir}${path.delimiter}${originalPath}`;
+
+    const input = JSON.stringify({
+      last_assistant_message: '{"snapview_capture":true}',
+      hook_event_name: 'Stop',
+    });
+
+    const result = runHook(input, {
+      SNAPVIEW_AUTO_TRIGGER: '1',
+      PATH: newPath,
+    });
+
+    expect(result.status).toBe(0);
+    const parsed = JSON.parse(result.stdout.trim());
+    expect(parsed.decision).toBe('block');
+    expect(parsed.reason).toContain(mockFilePath);
+    expect(parsed.reason).toContain('notice the red button');
   });
 
   test('exits 0 silently when snapview exits with code 2 (user cancelled)', () => {

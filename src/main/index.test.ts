@@ -231,11 +231,70 @@ describe('IPC channel registration', () => {
     expect(indexSource).toContain('ipcMain.handle(IPC_CHANNELS.CAPTURE_REGION');
   });
 
+  test('ipcMain.on is registered for READY_CONFIRMED channel', () => {
+    expect(indexSource).toContain('IPC_CHANNELS.READY_CONFIRMED');
+    expect(indexSource).toContain('ipcMain.on(IPC_CHANNELS.READY_CONFIRMED');
+  });
+
   test('GET_SOURCES handler checks macOS permission first — CAPT-05', () => {
     // Find the GET_SOURCES handler and verify permission check
     const handlerStart = indexSource.indexOf('ipcMain.handle(IPC_CHANNELS.GET_SOURCES');
     const handlerSection = indexSource.slice(handlerStart, handlerStart + 300);
     expect(handlerSection).toContain('checkMacOSPermission()');
+  });
+
+  test('CAPTURE_REGION handler emits a JSON envelope with filePath and promptText to stdout', () => {
+    const handlerStart = indexSource.indexOf('ipcMain.handle(IPC_CHANNELS.CAPTURE_REGION');
+    const handlerSection = indexSource.slice(handlerStart, handlerStart + 500);
+    expect(handlerSection).toContain('process.stdout.write(JSON.stringify(');
+    expect(handlerSection).toContain('filePath: result.filePath');
+    expect(handlerSection).toContain('promptText: result.promptText');
+  });
+
+  test('READY_CONFIRMED handler hides the Ready window immediately, then creates overlays, then closes it', () => {
+    // Ordering matters twice over:
+    // 1. hide() must happen before createOverlays() — both windows share the
+    //    'screen-saver' always-on-top level, so leaving it visible while
+    //    createOverlays() awaits desktopCapturer can flash it back on top.
+    // 2. createOverlays() must happen before close() — closing readyWindow
+    //    before any overlay exists would briefly leave zero windows open,
+    //    triggering window-all-closed and quitting the app before the
+    //    overlays ever appear.
+    const handlerStart = indexSource.indexOf('ipcMain.on(IPC_CHANNELS.READY_CONFIRMED');
+    const handlerSection = indexSource.slice(handlerStart, handlerStart + 500);
+    expect(handlerSection).toContain('readyWindow.hide()');
+    expect(handlerSection).toContain('createOverlays()');
+    expect(handlerSection).toContain('readyWindow.close()');
+
+    const hidePos = handlerSection.indexOf('readyWindow.hide()');
+    const createOverlaysPos = handlerSection.indexOf('createOverlays()');
+    const closePos = handlerSection.indexOf('readyWindow.close()');
+    expect(hidePos).toBeLessThan(createOverlaysPos);
+    expect(createOverlaysPos).toBeLessThan(closePos);
+  });
+});
+
+describe('Ready confirmation applet', () => {
+  test('createReadyWindow is defined and used before createOverlays in app.whenReady', () => {
+    expect(indexSource).toContain('function createReadyWindow(');
+    const whenReadyPos = indexSourceNoComments.indexOf('app.whenReady().then(');
+    const afterReady = indexSourceNoComments.slice(whenReadyPos);
+    expect(afterReady).toContain('createReadyWindow()');
+    expect(afterReady).not.toContain('createOverlays()');
+  });
+
+  test('Ready window is small and non-fullscreen (does not block the rest of the screen)', () => {
+    const fnStart = indexSource.indexOf('function createReadyWindow(');
+    const fnBody = indexSource.slice(fnStart, fnStart + 1000);
+    expect(fnBody).toContain('fullscreen: false');
+    expect(fnBody).toContain('width = 440');
+    expect(fnBody).toContain('height = 170');
+  });
+
+  test('Ready window loads index.html with ?mode=ready', () => {
+    const fnStart = indexSource.indexOf('function createReadyWindow(');
+    const fnBody = indexSource.slice(fnStart, fnStart + 1000);
+    expect(fnBody).toContain("query: { mode: 'ready' }");
   });
 });
 
@@ -244,16 +303,15 @@ describe('Auto-trigger confirmation', () => {
     expect(indexSource).toContain("process.argv.includes('--auto-trigger')");
   });
 
-  test('isAutoTriggered flag is checked inside app.whenReady before createOverlays call', () => {
-    // Find the whenReady block and verify auto-trigger check appears before createOverlays call
-    const whenReadyPos = indexSource.indexOf('app.whenReady()');
-    const afterReady = indexSource.slice(whenReadyPos);
+  test('isAutoTriggered flag is checked inside app.whenReady before the Ready applet is created', () => {
+    // Find the whenReady block and verify auto-trigger check appears before createReadyWindow call
+    const whenReadyPos = indexSourceNoComments.indexOf('app.whenReady().then(');
+    const afterReady = indexSourceNoComments.slice(whenReadyPos);
     const flagPos = afterReady.indexOf('isAutoTriggered');
-    // Use 'await createOverlays()' to match the call site, not the function definition
-    const overlayCallPos = afterReady.indexOf('await createOverlays()');
+    const readyWindowCallPos = afterReady.indexOf('createReadyWindow()');
     expect(flagPos).toBeGreaterThan(-1);
-    expect(overlayCallPos).toBeGreaterThan(-1);
-    expect(flagPos).toBeLessThan(overlayCallPos);
+    expect(readyWindowCallPos).toBeGreaterThan(-1);
+    expect(flagPos).toBeLessThan(readyWindowCallPos);
   });
 
   test('checkAutoTriggerApproval uses dialog.showMessageBox', () => {
@@ -330,6 +388,24 @@ describe('Timer cleanup', () => {
     expect(indexSource).toContain("app.on('will-quit'");
     expect(indexSource).toContain('clearTimeout(hardExitTimer)');
   });
+
+  test('hard exit timer is cleared at the top of app.whenReady, before any interactive UI is shown', () => {
+    // The hard-exit timer must only guard against app.whenReady() itself never
+    // resolving. Once the callback runs, the user may spend an arbitrary
+    // amount of time on the native approval dialog, the Ready applet, or
+    // typing a note — none of that should be capped by a fixed timeout.
+    const whenReadyPos = indexSourceNoComments.indexOf('app.whenReady().then(');
+    const afterReady = indexSourceNoComments.slice(whenReadyPos);
+    const clearPos = afterReady.indexOf('clearTimeout(hardExitTimer)');
+    const approvalPos = afterReady.indexOf('checkAutoTriggerApproval()');
+    const readyWindowPos = afterReady.indexOf('createReadyWindow()');
+
+    expect(clearPos).toBeGreaterThan(-1);
+    expect(approvalPos).toBeGreaterThan(-1);
+    expect(readyWindowPos).toBeGreaterThan(-1);
+    expect(clearPos).toBeLessThan(approvalPos);
+    expect(clearPos).toBeLessThan(readyWindowPos);
+  });
 });
 
 // ─── Cross-file security verification ────────────────────────────────────────
@@ -401,5 +477,20 @@ describe('Preload rect validation', () => {
   test('preload uses ipcRenderer.on for main→renderer push channels', () => {
     expect(preloadSource).toContain('ipcRenderer.on(IPC_CHANNELS.DISPLAY_INFO');
     expect(preloadSource).toContain('ipcRenderer.on(IPC_CHANNELS.SELECTION_STATE');
+  });
+
+  test('preload validates promptText is a string, trims it, and caps its length', () => {
+    expect(preloadSource).toContain("typeof promptText === 'string'");
+    expect(preloadSource).toContain('.trim()');
+    expect(preloadSource).toContain('MAX_PROMPT_LENGTH');
+  });
+
+  test('preload forwards a sanitized promptText field on captureRegion', () => {
+    expect(preloadSource).toContain('promptText: sanitizedPromptText');
+  });
+
+  test('preload exposes confirmReady using ipcRenderer.send for READY_CONFIRMED', () => {
+    expect(preloadSource).toContain('confirmReady:');
+    expect(preloadSource).toContain('ipcRenderer.send(IPC_CHANNELS.READY_CONFIRMED)');
   });
 });

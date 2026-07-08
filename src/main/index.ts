@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, screen } from 'electron';
 import path from 'path';
 import { promises as fs } from 'fs';
 import os from 'os';
-import { checkMacOSPermission, captureRegion, getAllDisplaySources } from './capture';
+import { checkMacOSPermission, captureRegion, getAllDisplaySources, getActiveDisplay } from './capture';
 import { sweepOldCaptures } from './cleanup';
 import { IPC_CHANNELS } from '../shared/types';
 
@@ -150,6 +150,54 @@ function createSingleOverlay(display: Electron.Display): BrowserWindow {
   return overlay;
 }
 
+/** The pre-capture "Ready" confirmation applet, if currently shown */
+let readyWindow: BrowserWindow | null = null;
+
+/**
+ * Create the small, non-blocking "Ready" confirmation applet shown before the
+ * full-screen capture overlays appear. Unlike the overlays, this window only
+ * covers a small area near the top of the active display, so the rest of the
+ * screen stays fully interactive — the user can rearrange windows/content
+ * before confirming.
+ */
+function createReadyWindow(): BrowserWindow {
+  const display = getActiveDisplay();
+  const width = 440;
+  const height = 170;
+  const x = Math.round(display.bounds.x + (display.bounds.width - width) / 2);
+  const y = display.bounds.y + 80;
+
+  const win = new BrowserWindow({
+    x,
+    y,
+    width,
+    height,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreen: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      navigateOnDragDrop: false,
+    },
+  });
+
+  win.setAlwaysOnTop(true, 'screen-saver');
+
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (event) => { event.preventDefault(); });
+
+  win.loadFile(path.join(__dirname, '../renderer/index.html'), { query: { mode: 'ready' } });
+  return win;
+}
+
 /**
  * Create one overlay per connected display and push display info to each renderer.
  * Overlays are tracked in overlayWindows map for synchronization.
@@ -195,8 +243,9 @@ ipcMain.handle(IPC_CHANNELS.GET_SOURCES, async () => {
 ipcMain.handle(IPC_CHANNELS.CAPTURE_REGION, async (_event, rect) => {
   try {
     const result = await captureRegion(rect);
-    // Emit the file path to stdout — consumed by the CLI entry point (bin/snapview.cjs)
-    process.stdout.write(result.filePath + '\n');
+    // Emit a JSON envelope to stdout — consumed by the CLI entry point (bin/snapview.cjs),
+    // which pipes it through unmodified to the auto-trigger hook / Claude Code.
+    process.stdout.write(JSON.stringify({ filePath: result.filePath, promptText: result.promptText ?? '' }) + '\n');
     process.exitCode = 0;
     app.quit();
     return result;
@@ -216,6 +265,28 @@ ipcMain.handle(IPC_CHANNELS.CAPTURE_REGION, async (_event, rect) => {
 ipcMain.handle(IPC_CHANNELS.CANCEL, () => {
   process.exitCode = 2;
   app.quit();
+});
+
+/**
+ * capture:ready-confirmed
+ * User clicked "Ready" on the pre-capture confirmation applet — hide it
+ * immediately for instant feedback, create the full-screen capture overlays,
+ * then close it. Overlays must be created FIRST: closing the Ready window
+ * before any overlay exists would briefly leave zero windows open, triggering
+ * the window-all-closed handler and quitting the app before the overlays ever
+ * appear. It's hidden (not closed) up front because both windows share the
+ * 'screen-saver' always-on-top level — leaving it visible while createOverlays()
+ * awaits desktopCapturer can let it flash back above the new overlays.
+ */
+ipcMain.on(IPC_CHANNELS.READY_CONFIRMED, async () => {
+  if (readyWindow && !readyWindow.isDestroyed()) {
+    readyWindow.hide();
+  }
+  await createOverlays();
+  if (readyWindow && !readyWindow.isDestroyed()) {
+    readyWindow.close();
+  }
+  readyWindow = null;
 });
 
 /**
@@ -255,6 +326,12 @@ ipcMain.on(IPC_CHANNELS.SELECTION_RESET, () => {
 const isAutoTriggered = process.argv.includes('--auto-trigger');
 
 app.whenReady().then(async () => {
+  // From this point on, the user is in control (native approval dialog, Ready
+  // applet, capture UI with an open-ended note field) — no more silent hangs
+  // are possible, so release the hard-exit safety net. It only needs to guard
+  // against app.whenReady() itself never resolving.
+  clearTimeout(hardExitTimer);
+
   // Fire-and-forget — background sweep of old screenshots (>24h)
   sweepOldCaptures();
 
@@ -262,7 +339,6 @@ app.whenReady().then(async () => {
   if (isAutoTriggered) {
     const approved = await checkAutoTriggerApproval();
     if (!approved) {
-      clearTimeout(hardExitTimer);
       // Use app.exit() instead of app.quit() — no windows exist yet, and app.quit()
       // can leave orphaned processes on Windows when no windows are open (electron#2312)
       app.exit(2); // Exit code 2 = user cancel
@@ -270,7 +346,7 @@ app.whenReady().then(async () => {
     }
   }
 
-  await createOverlays();
+  readyWindow = createReadyWindow();
 });
 
 // Prevents orphaned Electron process if all windows are closed via OS controls (PLAT-03)

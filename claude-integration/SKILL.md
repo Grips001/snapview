@@ -6,6 +6,12 @@ allowed-tools: Bash(snapview *)
 
 Launch the screen capture UI so the user can select a region of their screen.
 
+A "Ready" confirmation applet appears first (for both manual and auto-triggered
+captures) so the user can arrange their screen before the capture overlay opens;
+they click "Ready" or cancel from there. After selecting a region, the preview
+panel lets the user optionally type additional context alongside the screenshot,
+and has its own Cancel/X.
+
 ## When to use this vs clipboard paste
 
 Use `/snapview` when you need precise region selection, when the user hasn't already taken a screenshot, or when you want to auto-trigger a capture without the user switching context. For quick pastes of screenshots the user already has on their clipboard, native image paste (Alt+V on Windows, Cmd+V in iTerm2) is faster.
@@ -13,7 +19,7 @@ Use `/snapview` when you need precise region selection, when the user hasn't alr
 ## Steps
 1. Tell the user: "Launching capture UI..."
 2. Run: `snapview` using the Bash tool
-3. If exit code is 0: the file path is printed to stdout. Read that file immediately using the Read tool and continue the conversation with the screenshot in context.
+3. If exit code is 0: stdout contains a JSON object `{"filePath": "...", "promptText": "..."}`. Parse it, then read the file at `filePath` immediately using the Read tool. If `promptText` is non-empty, treat it as additional context/instructions the user typed alongside the screenshot, and continue the conversation incorporating both.
 4. If exit code is 2 (user cancelled): respond with "Screenshot cancelled. Want to try again?"
 5. If exit code is 1 (error): respond with "Screenshot failed. You may need to check permissions or try again."
 6. If the command times out (30s): respond with "Screenshot capture timed out. The capture window may need to be closed manually."
@@ -26,7 +32,7 @@ When you need to see the user's screen but want a more seamless flow, include th
 {"snapview_capture":true}
 ```
 
-A Stop hook will detect this signal, launch the capture UI automatically, and inject the screenshot path back into context. The user approves the capture region before anything is shared — they always have full control.
+A Stop hook will detect this signal, launch the capture UI automatically, and inject the screenshot path back into context. The user sees the same Ready/Cancel confirmation and approves the capture region before anything is shared — they always have full control.
 
 Use auto-trigger when visual context would help you give a better answer and the conversation flow benefits from not pausing for an explicit tool call.
 

@@ -111,6 +111,27 @@ body.selecting {
   flex-direction: column;
 }
 
+/* ----------------------------------------
+   Prompt Text Input (preview panel)
+   ---------------------------------------- */
+#prompt-input {
+  width: 480px;
+  min-height: 60px;
+  max-height: 160px;
+  margin-top: 16px;
+  padding: 8px 10px;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--hint-text);
+  font: var(--font-body);
+}
+
+#prompt-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
 #preview-panel h2 {
   font: var(--font-heading);
   color: var(--hint-text);
@@ -159,6 +180,63 @@ body.selecting {
   background: transparent;
   border: 1px solid var(--btn-ghost-border);
   color: var(--btn-ghost-text);
+}
+
+/* ----------------------------------------
+   Icon Close Button (top-right X, used by
+   the Ready dialog and the preview panel)
+   ---------------------------------------- */
+.btn-icon-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--hint-text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-icon-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ----------------------------------------
+   Ready Confirmation Dialog
+   ---------------------------------------- */
+#ready-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-border-radius);
+  padding: var(--panel-padding);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#ready-dialog h2 {
+  font: var(--font-heading);
+  color: var(--hint-text);
+  margin-bottom: 8px;
+  padding-right: 24px;
+}
+
+#ready-dialog p {
+  font: var(--font-body);
+  color: var(--hint-text);
+  margin-bottom: 16px;
 }
 
 /* ----------------------------------------

@@ -22,12 +22,13 @@ declare global {
   interface Window {
     snapviewBridge: {
       getSources(): Promise<{ id: string; thumbnail: string }[] | { permissionDenied: true }>;
-      captureRegion(rect: { x: number; y: number; width: number; height: number; displayId: number }): Promise<{ filePath: string } | null>;
+      captureRegion(rect: { x: number; y: number; width: number; height: number; displayId: number }, promptText?: string): Promise<{ filePath: string; promptText?: string } | null>;
       cancel(): Promise<void>;
       onDisplayInfo(callback: (info: { displayId: number; thumbnail: string; scaleFactor: number }) => void): void;
       onSelectionState(callback: (state: 'active' | 'inactive') => void): void;
       notifyDragStart(): void;
       notifyRetake(): void;
+      confirmReady(): void;
     };
   }
 }
@@ -73,6 +74,11 @@ let btnApprove: HTMLButtonElement;
 let btnRetake: HTMLButtonElement;
 let permissionDialog: HTMLElement;
 let btnOpenSettings: HTMLButtonElement;
+let readyDialog: HTMLElement;
+let btnReady: HTMLButtonElement;
+let btnReadyClose: HTMLButtonElement;
+let promptInput: HTMLTextAreaElement;
+let btnPreviewClose: HTMLButtonElement;
 
 // ----------------------------------------
 // Rect helper — single source of truth for selection normalization
@@ -255,10 +261,13 @@ function onMouseUp(e: MouseEvent): void {
 // ----------------------------------------
 
 async function onApprove(): Promise<void> {
-  await window.snapviewBridge.captureRegion({
-    ...normalizeRect(startX, startY, endX, endY),
-    displayId,
-  });
+  await window.snapviewBridge.captureRegion(
+    {
+      ...normalizeRect(startX, startY, endX, endY),
+      displayId,
+    },
+    promptInput.value.trim()
+  );
   // Main process handles stdout output and app.quit()
 }
 
@@ -313,6 +322,9 @@ function setupCanvas(img: HTMLImageElement): void {
   // Register button handlers
   btnApprove.addEventListener('click', onApprove);
   btnRetake.addEventListener('click', onRetake);
+  btnPreviewClose.addEventListener('click', () => {
+    window.snapviewBridge.cancel();
+  });
 }
 
 // ----------------------------------------
@@ -330,12 +342,31 @@ async function init(): Promise<void> {
   btnRetake = document.getElementById('btn-retake') as HTMLButtonElement;
   permissionDialog = document.getElementById('permission-dialog') as HTMLElement;
   btnOpenSettings = document.getElementById('btn-open-settings') as HTMLButtonElement;
-
-  // Apply selecting state cursor
-  document.body.classList.add('selecting');
+  readyDialog = document.getElementById('ready-dialog') as HTMLElement;
+  btnReady = document.getElementById('btn-ready') as HTMLButtonElement;
+  btnReadyClose = document.getElementById('btn-ready-close') as HTMLButtonElement;
+  promptInput = document.getElementById('prompt-input') as HTMLTextAreaElement;
+  btnPreviewClose = document.getElementById('btn-preview-close') as HTMLButtonElement;
 
   // Register global keyboard handler
   document.addEventListener('keydown', onKeyDown);
+
+  // The "Ready" confirmation applet is a separate, non-blocking window loaded
+  // with ?mode=ready — it never sets up the capture canvas/overlay.
+  const mode = new URLSearchParams(window.location.search).get('mode');
+  if (mode === 'ready') {
+    readyDialog.style.display = 'flex';
+    btnReady.addEventListener('click', () => {
+      window.snapviewBridge.confirmReady();
+    });
+    btnReadyClose.addEventListener('click', () => {
+      window.snapviewBridge.cancel();
+    });
+    return;
+  }
+
+  // Apply selecting state cursor
+  document.body.classList.add('selecting');
 
   // Check macOS screen recording permission (no-op on other platforms)
   let permissionResult: { permissionDenied?: true; permissionGranted?: true };

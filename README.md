@@ -4,12 +4,12 @@
 [![CI](https://github.com/Grips001/snapview/actions/workflows/ci.yml/badge.svg)](https://github.com/Grips001/snapview/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A capture workflow for Claude Code: region select, preview, approve, auto-inject, and Claude-requested screenshots.
+A capture workflow for Claude Code: ready check, region select, preview with notes, approve, auto-inject, and Claude-requested screenshots.
 
 <p align="center">
   <img src="docs/demo.gif" alt="Snapview capture demo" width="720" />
   <br />
-  <em>Select a region → preview → approve — screenshot lands in your conversation</em>
+  <em>Get ready → select a region → preview and add notes → approve — screenshot (and notes) land in your conversation</em>
 </p>
 
 ### Why Snapview when Claude Code can paste images?
@@ -59,7 +59,7 @@ npm uninstall -g snapview
 
 ### From Claude Code
 
-Type `/snapview` in any Claude Code conversation — a transparent overlay appears, drag to select a region, approve the capture, and the screenshot is injected into context.
+Type `/snapview` in any Claude Code conversation — a small "Ready" confirmation applet appears first so you can arrange your screen, then a transparent overlay opens where you drag to select a region. In the preview panel you can optionally type context to send alongside the screenshot, then approve — the screenshot (and any notes) are injected into the conversation. Cancel is available at every step via the X button or Esc.
 
 ### From the terminal
 
@@ -67,13 +67,13 @@ Type `/snapview` in any Claude Code conversation — a transparent overlay appea
 snapview
 ```
 
-Launches the capture overlay directly. On success (exit code 0), the temporary PNG file path is printed to stdout. Exit code 2 means the user cancelled; exit code 1 means an error occurred.
+Launches the capture overlay directly. On success (exit code 0), stdout prints a JSON object `{"filePath": "...", "promptText": "..."}` — the temporary PNG path and any text typed in the preview panel. Exit code 2 means the user cancelled (from the Ready applet, the preview panel, or Esc); exit code 1 means an error occurred.
 
 ### Auto-trigger
 
-When enabled (default), Claude can automatically request a screen capture when it needs visual context. This works through a Claude Code [Stop hook](https://docs.anthropic.com/en/docs/claude-code/hooks) — when Claude includes a `{"snapview_capture":true}` signal in its response, the hook detects it and launches the capture UI. You still choose the region and approve before anything is shared.
+When enabled (default), Claude can automatically request a screen capture when it needs visual context. This works through a Claude Code [Stop hook](https://docs.anthropic.com/en/docs/claude-code/hooks) — when Claude includes a `{"snapview_capture":true}` signal in its response, the hook detects it and launches the capture UI. You still see the Ready/Cancel applet, choose the region, and approve before anything is shared.
 
-The first time an auto-trigger occurs, a native OS dialog asks for your permission. This approval is persisted to `~/.snapview/config.json` so you're only asked once.
+The first time an auto-trigger occurs, a separate native OS dialog asks whether Claude may request captures *at all* going forward. This one-time approval is persisted to `~/.snapview/config.json` so you're only asked once. It's independent of the per-capture Ready/Cancel applet, which always appears before every capture (manual or auto-triggered).
 
 Disable auto-trigger by setting `SNAPVIEW_AUTO_TRIGGER` to `0` in `~/.claude/settings.json`:
 
@@ -83,7 +83,7 @@ Disable auto-trigger by setting `SNAPVIEW_AUTO_TRIGGER` to `0` in `~/.claude/set
 
 ## How it works
 
-Snapview is an Electron app that creates a transparent overlay on every connected monitor simultaneously. You drag to select a region on any display — the other monitors dim automatically — preview the capture, then approve or retake. Each overlay uses its own display's native DPI, so captures are pixel-perfect even with mixed-resolution multi-monitor setups. The screenshot is saved as a temporary PNG in your system temp directory with automatic 24-hour cleanup.
+Snapview first shows a small, non-blocking "Ready" confirmation applet — it doesn't cover your whole screen, so you can freely rearrange windows before confirming. Once you click Ready, it creates a transparent overlay on every connected monitor simultaneously. You drag to select a region on any display — the other monitors dim automatically — preview the capture, optionally add a note, then approve or retake. Each overlay uses its own display's native DPI, so captures are pixel-perfect even with mixed-resolution multi-monitor setups. The screenshot is saved as a temporary PNG in your system temp directory with automatic 24-hour cleanup.
 
 **Platform support:**
 - **Windows** — Works out of the box
@@ -154,10 +154,10 @@ bun test             # Run all tests
 
 Snapview has four layers:
 
-1. **CLI entry** (`bin/snapview.cjs`) — Spawns the Electron process and captures stdout for the file path
-2. **Main process** (`src/main/`) — Window creation, IPC routing, screen capture via `desktopCapturer`, PNG output
+1. **CLI entry** (`bin/snapview.cjs`) — Spawns the Electron process and pipes stdout through (a JSON envelope with the file path and any typed prompt text)
+2. **Main process** (`src/main/`) — Window creation (including the Ready applet and per-display capture overlays), IPC routing, screen capture via `desktopCapturer`, PNG output
 3. **Preload bridge** (`src/preload/`) — `contextBridge` exposing IPC channels with runtime validation
-4. **Renderer** (`src/renderer/`) — Canvas-based transparent overlay with drag-to-select and preview panel
+4. **Renderer** (`src/renderer/`) — Ready confirmation applet, canvas-based transparent overlay with drag-to-select, and preview panel with an optional prompt text box
 
 Claude Code integration lives in `claude-integration/SKILL.md` (skill definition) and `scripts/snapview-autotrigger.js` (Stop hook).
 

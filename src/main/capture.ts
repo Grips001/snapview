@@ -156,5 +156,5 @@ export async function captureRegion(rect: RegionRect): Promise<CaptureResult> {
   const filePath = path.join(SNAPVIEW_TEMP_DIR, filename);
   await fs.writeFile(filePath, pngBuffer);
 
-  return { filePath };
+  return { filePath, promptText: rect.promptText };
 }

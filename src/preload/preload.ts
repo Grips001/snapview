@@ -11,13 +11,16 @@ contextBridge.exposeInMainWorld('snapviewBridge', {
   getSources: (): Promise<{ id: string; thumbnail: string }[] | { permissionDenied: true }> =>
     ipcRenderer.invoke(IPC_CHANNELS.GET_SOURCES),
 
-  captureRegion: (rect: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    displayId: number;
-  }): Promise<{ filePath: string } | null> => {
+  captureRegion: (
+    rect: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      displayId: number;
+    },
+    promptText?: string
+  ): Promise<{ filePath: string; promptText?: string } | null> => {
     // Runtime validation — TypeScript types are erased at runtime, so validate
     // before forwarding to main process as defense-in-depth
     if (
@@ -32,6 +35,12 @@ contextBridge.exposeInMainWorld('snapviewBridge', {
     ) {
       return Promise.reject(new Error('Invalid capture region'));
     }
+
+    // promptText is optional free text — validate type, trim, and cap length
+    const MAX_PROMPT_LENGTH = 4000;
+    const sanitizedPromptText =
+      typeof promptText === 'string' ? promptText.trim().slice(0, MAX_PROMPT_LENGTH) : '';
+
     // Strip unexpected properties before forwarding
     return ipcRenderer.invoke(IPC_CHANNELS.CAPTURE_REGION, {
       x: rect.x,
@@ -39,10 +48,16 @@ contextBridge.exposeInMainWorld('snapviewBridge', {
       width: rect.width,
       height: rect.height,
       displayId: rect.displayId,
+      promptText: sanitizedPromptText,
     });
   },
 
   cancel: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.CANCEL),
+
+  /** Notify main that the user clicked "Ready" on the pre-capture confirmation applet */
+  confirmReady: (): void => {
+    ipcRenderer.send(IPC_CHANNELS.READY_CONFIRMED);
+  },
 
   // ─── Multi-monitor synchronization channels ────────────────────────────────
 

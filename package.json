@@ -1,6 +1,6 @@
 {
   "name": "snapview",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Capture workflow for Claude Code — region select, preview, approve, and Claude-requested screenshots",
   "license": "MIT",
   "author": "Grips001",

@@ -4,10 +4,12 @@ export interface RegionRect {
   width: number;
   height: number;
   displayId: number;
+  promptText?: string;
 }
 
 export interface CaptureResult {
   filePath: string;
+  promptText?: string;
 }
 
 /** Per-display info pushed from main process to each renderer after window load */
@@ -22,6 +24,7 @@ export const IPC_CHANNELS = {
   GET_SOURCES: 'capture:get-sources',
   CAPTURE_REGION: 'capture:region',
   CANCEL: 'capture:cancel',
+  READY_CONFIRMED: 'capture:ready-confirmed', // renderer → main (Ready applet confirmed)
   DISPLAY_INFO: 'capture:display-info', // main → renderer (pushed after load)
   DRAG_STARTED: 'capture:drag-started', // renderer → main (fire-and-forget)
   SELECTION_STATE: 'capture:selection-state', // main → renderer ('active' | 'inactive')

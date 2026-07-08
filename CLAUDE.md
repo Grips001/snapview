@@ -38,25 +38,31 @@ When the user asks to commit and push changes, always perform the full release f
 
 **4-layer Electron architecture:**
 
-1. **CLI entry** (`bin/snapview.cjs`) — Spawns Electron process, captures stdout for file path output
-2. **Main process** (`src/main/`) — Window creation, IPC routing, screen capture via `desktopCapturer`, PNG file output to `os.tmpdir()/snapview/`
+1. **CLI entry** (`bin/snapview.cjs`) — Spawns Electron process, pipes stdout through unmodified (JSON envelope `{filePath, promptText}`)
+2. **Main process** (`src/main/`) — Window creation (Ready confirmation applet + per-display capture overlays), IPC routing, screen capture via `desktopCapturer`, PNG file output to `os.tmpdir()/snapview/`
 3. **Preload bridge** (`src/preload/preload.ts`) — `contextBridge` exposing IPC channels with runtime validation (no `nodeIntegration`)
-4. **Renderer** (`src/renderer/`) — Canvas-based transparent overlay with drag-to-select, preview panel, approve/retake flow; one instance per connected display
+4. **Renderer** (`src/renderer/`) — Ready confirmation applet (`?mode=ready`), canvas-based transparent overlay with drag-to-select, preview panel (approve/retake + optional prompt text box) with cancel/X at every step; one overlay instance per connected display
 
 **Claude Code integration:**
 - `claude-integration/SKILL.md` — `/snapview` slash command definition
 - `scripts/snapview-autotrigger.js` — Stop hook that detects `{"snapview_capture":true}` signal (fast substring scan before JSON parse), passes `--auto-trigger` flag, exits silently on failure
 - `scripts/postinstall.cjs` — Installs skill, hook script, and merges settings into `~/.claude/`
 
-**Auto-trigger confirmation:**
-- First auto-triggered capture shows a native OS dialog asking user permission
+**Auto-trigger confirmation (one-time, separate from the per-capture Ready applet below):**
+- First auto-triggered capture shows a native OS dialog asking whether Claude may request captures at all going forward
 - Approval persisted to `~/.snapview/config.json` so it's only asked once
 - Denial exits with code 2 (same as manual cancel)
 
+**Ready confirmation applet (every capture, manual or auto-triggered):**
+- Before the full-screen capture overlays are created, `createReadyWindow()` shows a small, non-fullscreen, always-on-top `BrowserWindow` ("Claude is requesting a screenshot. Click 'Ready' when you are ready to take it.") so the user can arrange their screen — it does not block input to the rest of the screen
+- Loads the same `index.html`/`app.ts` bundle as the capture overlays, distinguished via `?mode=ready` query param, so it only renders `#ready-dialog` and skips canvas/selection setup
+- Clicking Ready sends `capture:ready-confirmed`, closing this window and calling `createOverlays()`; the X/Cancel button reuses the existing `capture:cancel` path (exit code 2)
+
 **IPC channels** (defined in `src/shared/types.ts`):
 - `capture:get-sources` — macOS permission check (returns `permissionDenied` or `permissionGranted`)
-- `capture:region` — Crop region, encode PNG, write to temp, output path to stdout
+- `capture:region` — Crop region, encode PNG, write to temp, output `{filePath, promptText}` JSON to stdout
 - `capture:cancel` — Quit with exit code 2
+- `capture:ready-confirmed` — Renderer → main: user clicked "Ready" on the pre-capture confirmation applet; main closes it and creates the capture overlays
 - `capture:display-info` — Main → renderer: push per-display thumbnail, displayId, scaleFactor after window load
 - `capture:drag-started` — Renderer → main: notify that this window started a selection
 - `capture:selection-state` — Main → renderer: broadcast `'active'`/`'inactive'` to coordinate multi-monitor overlays
@@ -79,7 +85,7 @@ When the user asks to commit and push changes, always perform the full release f
 - **Linux:** `enable-transparent-visuals` and `disable-gpu` flags applied before `app.whenReady()` to prevent opaque overlay on X11/NVIDIA; Wayland portal dismissal wrapped in try/catch
 - **Multi-monitor:** One BrowserWindow per connected display via `screen.getAllDisplays()`; sources matched by `display_id` with index fallback; `findSourceForDisplay()` helper shared by `getAllDisplaySources()` and `captureRegion()`
 - **HiDPI:** Per-display `scaleFactor` applied to region coordinates; canvas scaled by `devicePixelRatio`
-- **Hard exit:** 30-second timeout prevents Electron process hangs
+- **Hard exit:** 30-second timeout guards only against `app.whenReady()` never resolving — cleared at the top of the `whenReady().then()` callback so it never fires mid-interaction (native approval dialog, Ready applet, or typing a note)
 
 ## Testing Patterns
 

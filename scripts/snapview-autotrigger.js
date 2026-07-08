@@ -48,10 +48,12 @@ process.stdin.on('end', () => {
   }
 
   // Trigger detected — run the snapview binary
-  let filePath;
+  let filePath, promptText;
   try {
     const stdout = execFileSync('snapview', ['--auto-trigger'], { timeout: 32000, encoding: 'utf8' });
-    filePath = stdout.trim();
+    const parsed = JSON.parse(stdout);
+    filePath = parsed.filePath;
+    promptText = parsed.promptText || '';
   } catch (err) {
     // Check if it was a user cancel (exit code 2)
     if (err.status === 2) {
@@ -59,15 +61,16 @@ process.stdin.on('end', () => {
       process.exit(0);
     }
 
-    // Error or timeout — exit silently, don't disrupt Claude's response.
+    // Error, timeout, or malformed stdout — exit silently, don't disrupt Claude's response.
     // The capture was a background enhancement; failure shouldn't interrupt the conversation.
     process.exit(0);
   }
 
-  // Success — block Claude and inject file path instruction
-  process.stdout.write(JSON.stringify({
-    decision: 'block',
-    reason: 'Screenshot captured. Read the file at: ' + filePath + ' and continue the conversation with the screenshot in context.'
-  }) + '\n');
+  // Success — block Claude and inject file path (and optional user note) instruction
+  let reason = 'Screenshot captured. Read the file at: ' + filePath + ' and continue the conversation with the screenshot in context.';
+  if (promptText) {
+    reason += ' The user added this note: ' + JSON.stringify(promptText);
+  }
+  process.stdout.write(JSON.stringify({ decision: 'block', reason }) + '\n');
   process.exit(0);
 });
