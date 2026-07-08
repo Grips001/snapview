@@ -13,7 +13,7 @@ bun install          # Install dependencies
 bun run dev          # Electron dev mode with hot reload
 bun run build        # Production build via electron-vite (uses electron-vite.config.ts)
 bun run typecheck    # TypeScript checking (main + renderer configs)
-bun test             # Run all tests (bun:test, 110 tests across 6 files)
+bun test             # Run all tests (bun:test, 147 tests across 6 files)
 ```
 
 Global install (triggers postinstall that registers skill + hooks into `~/.claude/`):
@@ -27,7 +27,7 @@ Uses **trusted publishing** via GitHub Actions — do not run `npm publish` loca
 
 When the user asks to commit and push changes, always perform the full release flow:
 
-1. Bump the patch version in `package.json` (e.g., `1.1.2` → `1.1.3`)
+1. Bump the version in `package.json` — patch for fixes (e.g., `1.1.2` → `1.1.3`), minor for new user-facing features (e.g., `1.3.0` → `1.4.0`)
 2. Add a dated entry to `CHANGELOG.md` following the existing format, with a link reference at the bottom
 3. Commit all changes (including lockfile if changed) and push to `main`
 4. Create a git tag `v{version}` pointing to the pushed commit and push it
@@ -56,7 +56,7 @@ When the user asks to commit and push changes, always perform the full release f
 **Ready confirmation applet (every capture, manual or auto-triggered):**
 - Before the full-screen capture overlays are created, `createReadyWindow()` shows a small, non-fullscreen, always-on-top `BrowserWindow` ("Claude is requesting a screenshot. Click 'Ready' when you are ready to take it.") so the user can arrange their screen — it does not block input to the rest of the screen
 - Loads the same `index.html`/`app.ts` bundle as the capture overlays, distinguished via `?mode=ready` query param, so it only renders `#ready-dialog` and skips canvas/selection setup
-- Clicking Ready sends `capture:ready-confirmed`, closing this window and calling `createOverlays()`; the X/Cancel button reuses the existing `capture:cancel` path (exit code 2)
+- Clicking Ready sends `capture:ready-confirmed`. Handler order matters: **hide the Ready window → `await createOverlays()` → close it** — not close-then-create. Closing first briefly leaves zero windows open (triggers `window-all-closed`, quitting the app before the overlay ever appears); leaving it visible instead of hidden lets it flash back above the new overlay since both share the `screen-saver` always-on-top level. The X/Cancel button reuses the existing `capture:cancel` path (exit code 2).
 
 **IPC channels** (defined in `src/shared/types.ts`):
 - `capture:get-sources` — macOS permission check (returns `permissionDenied` or `permissionGranted`)
@@ -82,7 +82,7 @@ When the user asks to commit and push changes, always perform the full release f
 ## Platform-Specific Concerns
 
 - **macOS:** Screen Recording permission check before capture; handles `not-determined`/`denied`/`granted` states
-- **Linux:** `enable-transparent-visuals` and `disable-gpu` flags applied before `app.whenReady()` to prevent opaque overlay on X11/NVIDIA; Wayland portal dismissal wrapped in try/catch
+- **Linux:** `enable-transparent-visuals` and `disable-gpu` flags applied before `app.whenReady()` to prevent opaque overlay on X11/NVIDIA; Wayland portal dismissal wrapped in try/catch; `roundedCorners: false` set explicitly on the overlay and Ready windows since Electron 43 defaults frameless windows to rounded corners on Linux, which would otherwise put gaps at the corners of the full-bleed overlay
 - **Multi-monitor:** One BrowserWindow per connected display via `screen.getAllDisplays()`; sources matched by `display_id` with index fallback; `findSourceForDisplay()` helper shared by `getAllDisplaySources()` and `captureRegion()`
 - **HiDPI:** Per-display `scaleFactor` applied to region coordinates; canvas scaled by `devicePixelRatio`
 - **Hard exit:** 30-second timeout guards only against `app.whenReady()` never resolving — cleared at the top of the `whenReady().then()` callback so it never fires mid-interaction (native approval dialog, Ready applet, or typing a note)

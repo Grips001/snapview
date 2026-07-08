@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ready applet no longer briefly reappears after being confirmed — it's now hidden immediately on click (both windows shared the same always-on-top level, so it could flash back above the new capture overlay while `createOverlays()` awaited `desktopCapturer`)
 - Fixed a race where confirming Ready could quit the whole app before the capture overlay ever appeared (closing the Ready window before the overlay existed briefly left zero windows open, triggering `window-all-closed`)
 - Fixed a CI-only test failure: a fixed-character-offset string slice worked against a local LF checkout but cut off content on CI's CRLF (Windows) checkout — now bounded by the next function declaration instead of a fixed offset
+- Fixed the Ready applet showing the (irrelevant) "Drag to select · ESC to cancel" hint bar behind the confirmation dialog — it's visible by default and was only ever hidden on the transition into previewing/permission-denied, which the Ready-mode branch never reaches
 
 ## [1.3.0] - 2026-03-24
 
