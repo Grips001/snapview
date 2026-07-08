@@ -99,7 +99,9 @@ function install() {
       {
         type: 'command',
         command: 'node "' + hookCommandPath + '"',
-        timeout: 35,
+        // Must exceed the hook's own execFileSync timeout (300s) with margin,
+        // since the Ready applet/selection/note flow is fully interactive now.
+        timeout: 320,
       },
     ],
   });

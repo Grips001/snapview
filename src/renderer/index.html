@@ -10,7 +10,7 @@
 <body>
   <canvas id="overlay-canvas"></canvas>
   <div id="hint-bar">Drag to select  &middot;  ESC to cancel</div>
-  <div id="preview-panel" style="display: none;">
+  <div id="preview-panel" class="modal" style="display: none;">
     <button id="btn-preview-close" class="btn-icon-close" aria-label="Cancel">&times;</button>
     <h2>Capture Preview</h2>
     <img id="preview-image" alt="Capture preview" />
@@ -20,13 +20,13 @@
       <button id="btn-approve" class="btn btn-primary">Send to Claude</button>
     </div>
   </div>
-  <div id="ready-dialog" style="display: none;">
+  <div id="ready-dialog" class="modal" style="display: none;">
     <button id="btn-ready-close" class="btn-icon-close" aria-label="Cancel">&times;</button>
     <h2>Claude is requesting a screenshot.</h2>
     <p>Click "Ready" when you are ready to take it.</p>
     <button id="btn-ready" class="btn btn-primary">Ready</button>
   </div>
-  <div id="permission-dialog" style="display: none;">
+  <div id="permission-dialog" class="modal" style="display: none;">
     <h2>Screen Recording Permission Required</h2>
     <p>snapview needs screen recording access to capture your screen. Open System Settings to grant permission.</p>
     <p class="sequoia-note">macOS may ask for screen recording permission monthly. This is expected.</p>

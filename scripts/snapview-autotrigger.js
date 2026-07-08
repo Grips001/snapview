@@ -50,7 +50,10 @@ process.stdin.on('end', () => {
   // Trigger detected — run the snapview binary
   let filePath, promptText;
   try {
-    const stdout = execFileSync('snapview', ['--auto-trigger'], { timeout: 32000, encoding: 'utf8' });
+    // 300s — the Ready applet, region selection, and optional note field are
+    // all interactive now; the process itself has no internal timeout during
+    // that flow, so this outer bound just needs to be generous, not tight.
+    const stdout = execFileSync('snapview', ['--auto-trigger'], { timeout: 300000, encoding: 'utf8' });
     const parsed = JSON.parse(stdout);
     filePath = parsed.filePath;
     promptText = parsed.promptText || '';

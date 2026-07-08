@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.0] - 2026-07-07
+## [1.4.0] - 2026-07-08
 
 ### Added
 
@@ -18,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking: CLI stdout is now a JSON envelope** `{"filePath": "...", "promptText": "..."}` instead of a bare file path — updated in `scripts/snapview-autotrigger.js` and `claude-integration/SKILL.md`'s read-back instructions
 - `RegionRect` and `CaptureResult` gained an optional `promptText` field
+- The hard-exit timer (`HARD_EXIT_TIMEOUT_MS`) now only guards `app.whenReady()` itself never resolving — it's cleared at the top of the callback instead of running for the whole process lifetime, since the Ready applet, region selection, and note field are now genuinely interactive and shouldn't be capped by a fixed clock
+- Auto-trigger hook timeout raised from 32s to 300s (and the registered Stop-hook timeout from 35s to 320s) to match — a slow typist on an auto-triggered capture was getting silently killed at the old bound
+- `SKILL.md` now tells Claude to invoke `snapview` with an extended Bash-tool timeout (~10 min) for the same reason, and Claude is now instructed to explicitly quote/paraphrase the user's `promptText` note back in its reply instead of silently folding it into reasoning (previously invisible in the transcript beyond the collapsed "Read 1 file" tool call)
+- `vite` pinned to `7.3.6` (devDependency, was transitively resolving to a vulnerable 7.3.1 via `electron-vite`) — resolves 9 of 13 `bun audit` findings (path traversal, XSS, ReDoS); the remaining 4 are on `electron` itself and deferred to a future major-version upgrade
+- Deduplicated the repeated centered-modal CSS block across the preview panel, Ready dialog, and permission dialog into a shared `.modal` class
+
+### Fixed
+
+- Ready applet no longer briefly reappears after being confirmed — it's now hidden immediately on click (both windows shared the same always-on-top level, so it could flash back above the new capture overlay while `createOverlays()` awaited `desktopCapturer`)
+- Fixed a race where confirming Ready could quit the whole app before the capture overlay ever appeared (closing the Ready window before the overlay existed briefly left zero windows open, triggering `window-all-closed`)
+- Fixed a CI-only test failure: a fixed-character-offset string slice worked against a local LF checkout but cut off content on CI's CRLF (Windows) checkout — now bounded by the next function declaration instead of a fixed offset
 
 ## [1.3.0] - 2026-03-24
 

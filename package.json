@@ -47,11 +47,12 @@
     "electron": "41.0.3"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.9.4",
     "electron-vite": "5.0.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
   },
-"engines": {
+  "engines": {
     "node": ">=18"
   }
 }
