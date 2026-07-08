@@ -283,18 +283,24 @@ describe('Ready confirmation applet', () => {
     expect(afterReady).not.toContain('createOverlays()');
   });
 
+  // Bound the function body by the next top-level function declaration rather
+  // than a fixed character count — a fixed offset is line-ending sensitive
+  // (CI checks out with CRLF, which is longer than a local LF working copy)
+  // and can cut off content that's actually still inside the function.
+  const readyWindowFnStart = indexSource.indexOf('function createReadyWindow(');
+  const readyWindowFnBody = indexSource.slice(
+    readyWindowFnStart,
+    indexSource.indexOf('function createOverlays', readyWindowFnStart)
+  );
+
   test('Ready window is small and non-fullscreen (does not block the rest of the screen)', () => {
-    const fnStart = indexSource.indexOf('function createReadyWindow(');
-    const fnBody = indexSource.slice(fnStart, fnStart + 1000);
-    expect(fnBody).toContain('fullscreen: false');
-    expect(fnBody).toContain('width = 440');
-    expect(fnBody).toContain('height = 170');
+    expect(readyWindowFnBody).toContain('fullscreen: false');
+    expect(readyWindowFnBody).toContain('width = 440');
+    expect(readyWindowFnBody).toContain('height = 170');
   });
 
   test('Ready window loads index.html with ?mode=ready', () => {
-    const fnStart = indexSource.indexOf('function createReadyWindow(');
-    const fnBody = indexSource.slice(fnStart, fnStart + 1000);
-    expect(fnBody).toContain("query: { mode: 'ready' }");
+    expect(readyWindowFnBody).toContain("query: { mode: 'ready' }");
   });
 });
 
