@@ -435,6 +435,10 @@ const preloadSource = readFileSync(
   path.join(import.meta.dir, '../preload/preload.ts'),
   'utf-8'
 );
+const appSource = readFileSync(
+  path.join(import.meta.dir, '../renderer/app.ts'),
+  'utf-8'
+);
 
 describe('Content Security Policy', () => {
   test('renderer HTML includes a CSP meta tag', () => {
@@ -510,5 +514,14 @@ describe('Preload rect validation', () => {
   test('preload exposes confirmReady using ipcRenderer.send for READY_CONFIRMED', () => {
     expect(preloadSource).toContain('confirmReady:');
     expect(preloadSource).toContain('ipcRenderer.send(IPC_CHANNELS.READY_CONFIRMED)');
+  });
+});
+
+describe('Ready-mode renderer branch', () => {
+  test("hint bar is hidden in the ?mode=ready branch (it's visible by default and would otherwise show behind the Ready dialog)", () => {
+    const modeCheckPos = appSource.indexOf("mode === 'ready'");
+    expect(modeCheckPos).toBeGreaterThan(-1);
+    const readyBranch = appSource.slice(modeCheckPos, appSource.indexOf('return;', modeCheckPos));
+    expect(readyBranch).toContain("hintBar.style.display = 'none'");
   });
 });

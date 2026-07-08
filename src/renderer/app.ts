@@ -355,6 +355,10 @@ async function init(): Promise<void> {
   // with ?mode=ready — it never sets up the capture canvas/overlay.
   const mode = new URLSearchParams(window.location.search).get('mode');
   if (mode === 'ready') {
+    // This window never enters selecting/previewing phases, so the hint bar
+    // (visible by default) would otherwise sit behind the Ready dialog card,
+    // peeking out at the bottom of this small window with irrelevant copy.
+    hintBar.style.display = 'none';
     readyDialog.style.display = 'flex';
     btnReady.addEventListener('click', () => {
       window.snapviewBridge.confirmReady();
