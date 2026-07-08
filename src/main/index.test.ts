@@ -163,6 +163,14 @@ describe('Multi-monitor overlay windows — PLAT-04', () => {
   test('getAllDisplaySources is called to get per-display thumbnails', () => {
     expect(indexSource).toContain('getAllDisplaySources()');
   });
+
+  test('overlay disables roundedCorners (Electron 43+ defaults frameless windows to rounded on Linux)', () => {
+    const bwConfig = indexSource.slice(
+      indexSource.indexOf('new BrowserWindow('),
+      indexSource.indexOf('overlay.loadFile(')
+    );
+    expect(bwConfig).toContain('roundedCorners: false');
+  });
 });
 
 describe('Multi-monitor synchronization IPC', () => {
@@ -301,6 +309,10 @@ describe('Ready confirmation applet', () => {
 
   test('Ready window loads index.html with ?mode=ready', () => {
     expect(readyWindowFnBody).toContain("query: { mode: 'ready' }");
+  });
+
+  test('Ready window disables roundedCorners to match the overlay', () => {
+    expect(readyWindowFnBody).toContain('roundedCorners: false');
   });
 });
 

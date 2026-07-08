@@ -150,6 +150,8 @@ bun run typecheck    # TypeScript checking
 bun test             # Run all tests
 ```
 
+Electron 42+ downloads its binary on-demand on first execution rather than during `bun install`. If the very first `bun run dev` or `bun run build` fails with `Error: Electron uninstall`, run `node node_modules/electron/install.js` once to fetch it, then retry. This only affects local contributor setups — the published CLI resolves Electron via `require('electron')`, which triggers this same on-demand download automatically for end users.
+
 ### Architecture
 
 Snapview has four layers:

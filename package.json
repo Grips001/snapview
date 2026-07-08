@@ -44,15 +44,19 @@
     "postinstall": "node scripts/postinstall.cjs"
   },
   "dependencies": {
-    "electron": "41.0.3"
+    "electron": "43.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
     "@types/node": "^25.9.4",
-    "electron-vite": "5.0.0",
+    "electron-vite": "^5.0.0",
     "typescript": "5.9.3",
-    "vite": "7.3.6"
+    "vite": "^7.3.6"
   },
   "engines": {
     "node": ">=18"
+  },
+  "overrides": {
+    "@babel/core": "^7.29.7"
   }
 }

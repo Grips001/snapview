@@ -21,8 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hard-exit timer (`HARD_EXIT_TIMEOUT_MS`) now only guards `app.whenReady()` itself never resolving — it's cleared at the top of the callback instead of running for the whole process lifetime, since the Ready applet, region selection, and note field are now genuinely interactive and shouldn't be capped by a fixed clock
 - Auto-trigger hook timeout raised from 32s to 300s (and the registered Stop-hook timeout from 35s to 320s) to match — a slow typist on an auto-triggered capture was getting silently killed at the old bound
 - `SKILL.md` now tells Claude to invoke `snapview` with an extended Bash-tool timeout (~10 min) for the same reason, and Claude is now instructed to explicitly quote/paraphrase the user's `promptText` note back in its reply instead of silently folding it into reasoning (previously invisible in the transcript beyond the collapsed "Read 1 file" tool call)
-- `vite` pinned to `7.3.6` (devDependency, was transitively resolving to a vulnerable 7.3.1 via `electron-vite`) — resolves 9 of 13 `bun audit` findings (path traversal, XSS, ReDoS); the remaining 4 are on `electron` itself and deferred to a future major-version upgrade
+- `vite` bumped to `^7.3.6` (devDependency, was transitively resolving to a vulnerable 7.3.1 via `electron-vite`)
+- **`electron` upgraded from `41.0.3` to `43.1.0`** (latest stable), clearing all 3 advisories against the 41.0.x line (offscreen-texture UAF, clipboard crash, `window.open` target scoping). `roundedCorners: false` is now set explicitly on both the capture overlay and the Ready applet, since Electron 43 defaults frameless windows to rounded corners on Linux and both windows need to stay flush rectangles.
+- `@babel/core` forced to `^7.29.7` via a package.json `overrides` entry — `electron-vite`'s own dependency declaration (`^7.28.4`) already allowed the patched version, but was resolving a stale nested copy
+- `bun audit` now reports zero vulnerabilities (was 13)
 - Deduplicated the repeated centered-modal CSS block across the preview panel, Ready dialog, and permission dialog into a shared `.modal` class
+- Dev-dependency versions (`vite`, `electron-vite`, `@babel/core`) now use caret ranges instead of exact pins so future patch releases are picked up automatically
 
 ### Fixed
 

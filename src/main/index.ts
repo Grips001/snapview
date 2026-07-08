@@ -125,6 +125,7 @@ function createSingleOverlay(display: Electron.Display): BrowserWindow {
     fullscreen: false, // CRITICAL: fullscreen:true ignores x/y and uses primary display
     skipTaskbar: true,
     hasShadow: false, // Clean transparent overlay, especially on Linux Wayland
+    roundedCorners: false, // Electron 43+ defaults frameless windows to rounded on Linux; this overlay must be a flush full-bleed rectangle
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
@@ -181,6 +182,7 @@ function createReadyWindow(): BrowserWindow {
     fullscreen: false,
     skipTaskbar: true,
     hasShadow: false,
+    roundedCorners: false, // native window stays a plain rectangle; the modal's own border-radius (styles.css) draws the visible rounding
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
