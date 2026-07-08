@@ -19,7 +19,7 @@ Use `/snapview` when you need precise region selection, when the user hasn't alr
 ## Steps
 1. Tell the user: "Launching capture UI..."
 2. Run: `snapview` using the Bash tool
-3. If exit code is 0: stdout contains a JSON object `{"filePath": "...", "promptText": "..."}`. Parse it, then read the file at `filePath` immediately using the Read tool. If `promptText` is non-empty, treat it as additional context/instructions the user typed alongside the screenshot, and continue the conversation incorporating both.
+3. If exit code is 0: stdout contains a JSON object `{"filePath": "...", "promptText": "..."}`. Parse it, then read the file at `filePath` immediately using the Read tool. If `promptText` is non-empty, quote or closely paraphrase it back at the start of your reply (e.g. "You noted: \"...\" — looking at the screenshot now...") before addressing it — don't just fold it silently into your reasoning. The user only sees the collapsed Read tool call in the transcript, so restating their note is the only way they can confirm it came through.
 4. If exit code is 2 (user cancelled): respond with "Screenshot cancelled. Want to try again?"
 5. If exit code is 1 (error): respond with "Screenshot failed. You may need to check permissions or try again."
 6. If the command times out (30s): respond with "Screenshot capture timed out. The capture window may need to be closed manually."
